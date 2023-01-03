@@ -7,6 +7,8 @@ import mediapipe as mp
 import cv2
 import numpy as np
 
+from feat.detector import Detector
+
 import Mouse
 import DrawingDebug
 import SignalsCalculator
@@ -34,6 +36,8 @@ class Demo(Thread):
         self.camera_parameters = (800, 800, 1280/2, 1280/2)
         self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters)
         self.signal_calculator.set_filter_value("screen_xy", 0.022)
+
+        self.detector = Detector()
         # add hotkey
         keyboard.add_hotkey("esc", lambda: self.stop())
         keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())
@@ -63,7 +67,7 @@ class Demo(Thread):
         self.raw_signal = SignalsCalculator.SignalsResult()
         self.transformed_signals = SignalsCalculator.SignalsResult()
 
-    def run(self):
+    def run_mediapipe(self):
         self.is_running = True
         with mp_face_mesh.FaceMesh(refine_landmarks=True) as face_mesh:
             while self.is_running and self.cam_cap.isOpened():
@@ -90,6 +94,24 @@ class Demo(Thread):
                 # Debug
                 DrawingDebug.show_landmarks(landmarks, image)
                 # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
+
+    def run(self):
+        self.is_running = True
+        with mp_face_mesh.FaceMesh(refine_landmarks=True) as face_mesh:
+            while self.is_running and self.cam_cap.isOpened():
+                success, image = self.cam_cap.read()
+                faces = self.detector.detect_faces(image)
+                if not faces:
+                    continue
+                landmarks = self.detector.detect_landmarks(image, faces)
+                pose = self.detector.detect_facepose(image, landmarks)
+                aus = self.detector.detect_aus(image, landmarks)
+
+                self.raw_signal.jaw_open.set(aus[0][0,17])
+                self.raw_signal.mouth_puck.set(aus[0][0,12])
+                print(aus)
+
+
 
     def record_neutral(self):
         with mp_face_mesh.FaceMesh(refine_landmarks=True) as face_mesh:
