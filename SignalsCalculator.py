@@ -75,8 +75,11 @@ class SignalsResult:
     yaw: FilteredFloat
     roll: FilteredFloat
     screen_xy: Filtered2D
-    mouth_open: FilteredFloat
+    jaw_open: FilteredFloat
     mouth_puck: FilteredFloat
+    debug1: FilteredFloat
+    debug2: FilteredFloat
+    debug3: FilteredFloat
 
     def __init__(self):
         self.rvec = np.zeros((3,))
@@ -85,8 +88,11 @@ class SignalsResult:
         self.pitch = FilteredFloat(0.)
         self.yaw = FilteredFloat(0.)
         self.roll = FilteredFloat(0.)
-        self.mouth_open = FilteredFloat(0.001)
-        self.mouth_puck = FilteredFloat(0.001)
+        self.jaw_open = FilteredFloat(0.)
+        self.mouth_puck = FilteredFloat(0.)
+        self.debug1 = FilteredFloat(0.)
+        self.debug2 = FilteredFloat(0.)
+        self.debug3 = FilteredFloat(0.)
         self.screen_xy = Filtered2D(np.zeros((2,)))
 
 
@@ -110,7 +116,7 @@ class SignalsCalculater:
         self.result.pitch.set(angles[0])
         self.result.roll.set(angles[2])
         self.result.nosetip = rotationmat@self.head_pose_calculator.canonical_metric_landmarks[1, :]+tvec.squeeze()
-        self.result.mouth_open.set(self.get_mouth_open(landmarks))
+        self.result.jaw_open.set(self.get_jaw_open(landmarks))
         self.result.mouth_puck.set(self.get_mouth_puck(landmarks))
         screen_xy = self.get_screen_intersection()
         screen_xy = np.array(screen_xy)
@@ -131,14 +137,23 @@ class SignalsCalculater:
         x_pixel, y_pixel = self.monitor.camera_to_monitor(10*screen_point[0], 10*screen_point[1])
         return x_pixel, y_pixel
 
-    def get_mouth_open(self, landmarks):
-        distance = np.linalg.norm(landmarks[14, :]-landmarks[13, :])
-        d = np.linalg.norm(landmarks[6, :]-landmarks[4, :])
-        normalized_distance = distance/d
+    def get_jaw_open(self, landmarks):
+        mouth_distance = np.linalg.norm(landmarks[14, :]-landmarks[13, :])
+
+        sx = np.linalg.norm(landmarks[6, :]-landmarks[4, :])
+        sy = np.linalg.norm(landmarks[33, :]-landmarks[263, :])
+
+
+        mouse_midpoint = (landmarks[14, :]+landmarks[13, :])/2
+        nose_distance = np.linalg.norm(mouse_midpoint-landmarks[1, :])
+        normalized_distance = mouth_distance-nose_distance
         return normalized_distance
 
     def get_mouth_puck(self, landmarks):
-        pass
+        left_distance = np.linalg.norm(landmarks[302]-landmarks[72])
+        d = np.linalg.norm(landmarks[6, :] - landmarks[4, :])
+        normalized_distance = (left_distance)
+        return normalized_distance
 
     def set_filter_value(self, field_name: str, filter_value: float):
         signal = getattr(self.result, field_name, None)
