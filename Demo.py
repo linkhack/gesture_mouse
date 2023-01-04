@@ -77,8 +77,10 @@ class Demo(Thread):
                     continue
                 landmarks = results.multi_face_landmarks[0]
                 np_landmarks = np.array(
-                    [(lm.x * self.frame_width, lm.y * self.frame_height) for lm in landmarks.landmark])
+                    [(lm.x, lm.y, lm.z) for lm in landmarks.landmark])
                 result = self.signal_calculator.process(np_landmarks)
+
+
                 ## Calculate point on screen
 
                 x_pixel, y_pixel = result.screen_xy.get()

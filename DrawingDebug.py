@@ -39,6 +39,7 @@ def show_landmarks(landmarks, image):
     cv2.imshow('MediaPipe Face Mesh', cv2.flip(annotated_image, 1))
     cv2.waitKey(1)
 
+
 def show_por(x_pixel, y_pixel, width, height):
     display = np.ones((height, width, 3), np.float32)
 
@@ -47,6 +48,18 @@ def show_por(x_pixel, y_pixel, width, height):
                 (int(x_pixel), int(y_pixel)), font, 0.5,
                 (0, 0, 255), 10,
                 cv2.LINE_AA)
+    cv2.namedWindow("por", cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty("por", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    cv2.imshow('por', display)
+    cv2.waitKey(1)
+
+
+def show_points(points, width, height):
+    display = np.ones((height, width, 3), np.float32)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    for point in points:
+        cv2.putText(display, ".", (int(point[0]), int(point[1])), font, 0.5, (0, 0, 255), 10, cv2.LINE_AA)
+
     cv2.namedWindow("por", cv2.WINDOW_NORMAL)
     cv2.setWindowProperty("por", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     cv2.imshow('por', display)
