@@ -31,7 +31,7 @@ class Demo(Thread):
 
         self.monitor = monitor.monitor()
 
-        self.camera_parameters = (800, 800, 1280/2, 1280/2)
+        self.camera_parameters = (800, 800, 1280/2, 720/2)
         self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters)
         self.signal_calculator.set_filter_value("screen_xy", 0.022)
         # add hotkey
@@ -77,7 +77,7 @@ class Demo(Thread):
                     continue
                 landmarks = results.multi_face_landmarks[0]
                 np_landmarks = np.array(
-                    [(lm.x, lm.y) for lm in landmarks.landmark])
+                    [(lm.x*self.frame_width, lm.y*self.frame_height) for lm in landmarks.landmark])
                 result = self.signal_calculator.process(np_landmarks)
 
 

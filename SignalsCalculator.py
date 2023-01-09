@@ -144,9 +144,9 @@ class SignalsCalculater:
         mouth_distance = np.linalg.norm(landmarks[14, :]-landmarks[13, :])
         nose_tip = landmarks[1, :]
         chin_moving_landmark = landmarks[18, :]
-        nose_length = np.linalg.norm(landmarks[8, 0]-landmarks[1, 0])
+        head_height = np.linalg.norm(landmarks[10, :]-landmarks[151, :])
         jaw_nose_distance = np.linalg.norm(nose_tip-chin_moving_landmark)
-        normalized_distance = jaw_nose_distance/nose_length
+        normalized_distance = jaw_nose_distance/head_height
         return normalized_distance
 
     def get_mouth_puck(self, landmarks):
