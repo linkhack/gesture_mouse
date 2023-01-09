@@ -1,5 +1,6 @@
 import DrawingDebug
 from PnPHeadPose import PnPHeadPose
+from face_geometry import PCF, get_metric_landmarks
 import monitor
 import KalmanFilter1D
 
@@ -100,13 +101,14 @@ class SignalsResult:
 class SignalsCalculater:
     def __init__(self, camera_parameters):
         self.result = SignalsResult()
-        self.neutral_landmarks = np.zeros((478,3))
+        self.neutral_landmarks = np.zeros((478, 3))
         self.camera_parameters = camera_parameters
         self.head_pose_calculator = PnPHeadPose()
         self.monitor = monitor.monitor()
 
     def process(self, landmarks):
         rvec, tvec = self.head_pose(landmarks[:, :2])
+
         r = Rotation.from_rotvec(np.squeeze(rvec))
 
         rotationmat = r.as_matrix()
@@ -140,14 +142,11 @@ class SignalsCalculater:
 
     def get_jaw_open(self, landmarks):
         mouth_distance = np.linalg.norm(landmarks[14, :]-landmarks[13, :])
-
-        sx = np.linalg.norm(landmarks[6, :]-landmarks[4, :])
-        sy = np.linalg.norm(landmarks[33, :]-landmarks[263, :])
-
-
-        mouse_midpoint = (landmarks[14, :]+landmarks[13, :])/2
-        nose_distance = np.linalg.norm(mouse_midpoint-landmarks[1, :])
-        normalized_distance = mouth_distance-nose_distance
+        nose_tip = landmarks[1, :]
+        chin_moving_landmark = landmarks[18, :]
+        nose_length = np.linalg.norm(landmarks[8, 0]-landmarks[1, 0])
+        jaw_nose_distance = np.linalg.norm(nose_tip-chin_moving_landmark)
+        normalized_distance = jaw_nose_distance/nose_length
         return normalized_distance
 
     def get_mouth_puck(self, landmarks):

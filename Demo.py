@@ -24,10 +24,10 @@ class Demo(Thread):
 
         self.mouse = Mouse.Mouse()
 
-        self.cam_cap = cv2.VideoCapture(0)
-        self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.frame_width, self.frame_height = (1280, 720)
+        self.cam_cap = cv2.VideoCapture(0)
+        self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
+        self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
 
         self.monitor = monitor.monitor()
 
@@ -77,7 +77,7 @@ class Demo(Thread):
                     continue
                 landmarks = results.multi_face_landmarks[0]
                 np_landmarks = np.array(
-                    [(lm.x, lm.y, lm.z) for lm in landmarks.landmark])
+                    [(lm.x, lm.y) for lm in landmarks.landmark])
                 result = self.signal_calculator.process(np_landmarks)
 
 
