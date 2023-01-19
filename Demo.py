@@ -115,9 +115,13 @@ class Demo(Thread):
 
     def __run_livelinkface(self):
         while self.is_running and not self.use_mediapipe:
-            data, addr = self.socket.recvfrom(1024)
-            sucess, live_link_face = PyLiveLinkFace.decode(data)
-            if sucess:
+            try:
+                data, addr = self.socket.recvfrom(1024)
+                success, live_link_face = PyLiveLinkFace.decode(data)
+            except socket.error:
+                success = False
+
+            if success:
                 self.raw_signal.pitch.set(live_link_face.get_blendshape(FaceBlendShape.HeadPitch))
                 self.raw_signal.yaw.set(live_link_face.get_blendshape(FaceBlendShape.HeadYaw))
                 self.raw_signal.roll.set(live_link_face.get_blendshape(FaceBlendShape.HeadYaw))
@@ -138,6 +142,7 @@ class Demo(Thread):
 
     def __start_socket(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket.setblocking(0)
         self.socket.bind(("", self.UDP_PORT))
 
     def __stop_socket(self):
@@ -191,6 +196,9 @@ class Demo(Thread):
         signal = getattr(self.raw_signal, name, None)
         if signal is not None:
             signal.set_filter_value(filter_value)
+
+    def set_use_mediapipe(self, selected):
+        self.use_mediapipe = selected
 
 
     def toggle_mouse_mode(self):

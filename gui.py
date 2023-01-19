@@ -87,11 +87,11 @@ class SignalSetting(QtWidgets.QWidget):
         self.filter_slider.doubleValueChanged.connect(lambda value: print(value))
 
 
-class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
+class SignalTab(QtWidgets.QWidget):
+    def __init__(self, demo):
+        #TODO: move signals to file
         super().__init__()
-        self.demo = Demo.Demo()
-
+        self.demo = demo
         self.setWindowTitle("Signals Visualization")
         self.signals_vis = SignalVis()
 
@@ -143,32 +143,72 @@ class MainWindow(QtWidgets.QMainWindow):
         self.debug3.visualization_checkbox.setChecked(False)
         self.debug3.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value("debug3", x))
 
-        self.neutral_button = QtWidgets.QPushButton("Record neutral")
-        self.neutral_button.clicked.connect(self.demo.record_neutral)
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.signals_vis)
+        self.layout.addWidget(self.pitch)
+        self.layout.addWidget(self.roll)
+        self.layout.addWidget(self.yaw)
+        self.layout.addWidget(self.jaw_open)
+        self.layout.addWidget(self.mouth_puck)
+        self.layout.addWidget(self.debug1)
+        self.layout.addWidget(self.debug2)
+        self.layout.addWidget(self.debug3)
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.signals_vis)
-        layout.addWidget(self.pitch)
-        layout.addWidget(self.roll)
-        layout.addWidget(self.yaw)
-        layout.addWidget(self.jaw_open)
-        layout.addWidget(self.mouth_puck)
-        layout.addWidget(self.debug1)
-        layout.addWidget(self.debug2)
-        layout.addWidget(self.debug3)
-        layout.addWidget(self.neutral_button)
-        widget = QtWidgets.QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
+    def update_plots(self, signals):
+        self.signals_vis.update_plot(signals)
+
+
+class GeneralTab(QtWidgets.QWidget):
+    def __init__(self, demo):
+        super().__init__()
+        self.demo = demo
+        self.mediapipe_selector_button = QtWidgets.QRadioButton(text="Use web cam tracking.")
+        self.mediapipe_selector_button.setChecked(False)
+        self.mediapipe_selector_button.clicked.connect(lambda selected: self.demo.set_use_mediapipe(selected))
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.mediapipe_selector_button)
+
+class MouseTab(QtWidgets.QWidget):
+    def __init__(self, demo):
+        super().__init__()
+
+
+class KeyboardTab(QtWidgets.QWidget):
+    def __init__(self, demo):
+        super().__init__()
+
+
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.demo = Demo.Demo()
+
+        self.central_widget = QtWidgets.QTabWidget()
+        self.signal_tab = SignalTab(self.demo)
+        self.general_tab = GeneralTab(self.demo)
+        self.keyboard_tab = KeyboardTab(self.demo)
+        self.mouse_tab = MouseTab(self.demo)
+
+        self.central_widget.addTab(self.general_tab, "General")
+        self.central_widget.addTab(self.keyboard_tab, "Keyboard")
+        self.central_widget.addTab(self.mouse_tab, "Mouse")
+        self.central_widget.addTab(self.signal_tab, "Signal")
+
+        self.setCentralWidget(self.central_widget)
+
         self.timer = QtCore.QTimer()
         self.timer.setInterval(50)
         self.timer.timeout.connect(self.update_plots)
         self.timer.start()
 
+        ## Signals
+
         self.demo.start()
 
     def update_plots(self):
-        self.signals_vis.update_plot(self.demo.raw_signal)
+        # TODO: move up again
+        self.signal_tab.update_plots(self.demo.raw_signal)
+
 
 def test_gui():
     pygame.init()
@@ -177,7 +217,6 @@ def test_gui():
     window.resize(800, 600)
     window.show()
     app.exec()
-
 
 
 if __name__ == '__main__':
