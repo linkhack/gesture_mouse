@@ -12,6 +12,8 @@ import DrawingDebug
 import SignalsCalculator
 import monitor
 
+from pyLiveLinkFace import PyLiveLinkFace
+
 mp_face_mesh = mp.solutions.face_mesh
 mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
@@ -22,7 +24,6 @@ class Demo(Thread):
         self.is_running = False
         self.mouse_enabled = False
         self.mouse_absolute = True
-
         self.mouse = Mouse.Mouse()
 
         self.frame_width, self.frame_height = (1280, 720)
