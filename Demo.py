@@ -124,7 +124,7 @@ class Demo(Thread):
                 self.raw_signal.mouth_puck.set(live_link_face.get_blendshape(FaceBlendShape.MouthPucker))
                 self.raw_signal.jaw_open.set(live_link_face.get_blendshape(FaceBlendShape.JawOpen))
                 self.raw_signal.debug1.set(live_link_face.get_blendshape(FaceBlendShape.BrowInnerUp))
-                self.raw_signal.debug2.set(live_link_face.get_blendshape(FaceBlendShape.TongueOut))
+                self.raw_signal.debug2.set(live_link_face.get_blendshape(FaceBlendShape.EyeBlinkRight))
                 self.raw_signal.debug3.set(live_link_face.get_blendshape(FaceBlendShape.CheekPuff))
 
     def __start_camera(self):
@@ -188,6 +188,10 @@ class Demo(Thread):
     def set_filter_value(self, name: str, filter_value: float):
         print(name)
         self.signal_calculator.set_filter_value(name, filter_value)
+        signal = getattr(self.raw_signal, name, None)
+        if signal is not None:
+            signal.set_filter_value(filter_value)
+
 
     def toggle_mouse_mode(self):
         self.mouse_absolute = not self.mouse_absolute
