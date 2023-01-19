@@ -1,5 +1,6 @@
-from pynput.mouse import Listener
+
 import mouse
+import pygame
 
 
 class Mouse:
@@ -18,7 +19,7 @@ class Mouse:
             dy = (y - self.y)
             self.x += dx
             self.y += dy
-            mouse.move(dx, dy, absolute=False)
+            mouse.move(dx, dy, absolute)
 
     def update(self, x, y):
         self.x = x
@@ -26,9 +27,7 @@ class Mouse:
         return True
 
     def enable_gesture(self):
-        self.mouse_listener = Listener(on_move=self.update, suppress=True)
-        self.mouse_listener.start()
+        pass
 
     def disable_gesture(self):
-        if self.mouse_listener:
-            self.mouse_listener.stop()
+        pass

@@ -1,11 +1,10 @@
 import sys
 
-import numpy as np
 from PySide6 import QtWidgets, QtCore, QtGui
-from qtrangeslider import QDoubleRangeSlider
 from gui_widgets import LogarithmicSlider
 import pyqtgraph as pg
 import time
+import pygame
 
 import Demo
 import SignalsCalculator
@@ -172,11 +171,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.signals_vis.update_plot(self.demo.raw_signal)
 
 def test_gui():
+    pygame.init()
     app = QtWidgets.QApplication([])
     window = MainWindow()
     window.resize(800, 600)
     window.show()
     app.exec()
+
 
 
 if __name__ == '__main__':

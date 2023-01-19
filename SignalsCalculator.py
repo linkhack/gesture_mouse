@@ -113,6 +113,7 @@ class SignalsCalculater:
 
         rotationmat = r.as_matrix()
         angles = r.as_euler("xyz", degrees=True)
+        #normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
         self.result.rvec = rvec
         self.result.tvec = tvec
         self.result.yaw.set(angles[1])
@@ -151,8 +152,8 @@ class SignalsCalculater:
 
     def get_mouth_puck(self, landmarks):
         left_distance = np.linalg.norm(landmarks[302]-landmarks[72])
-        d = np.linalg.norm(landmarks[6, :] - landmarks[4, :])
-        normalized_distance = (left_distance)
+        d = np.linalg.norm(landmarks[151, :] - landmarks[10, :])
+        normalized_distance = left_distance/d
         return normalized_distance
 
     def set_filter_value(self, field_name: str, filter_value: float):

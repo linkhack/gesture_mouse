@@ -21,6 +21,7 @@ class Demo(Thread):
         super().__init__()
         self.is_running = False
         self.mouse_enabled = False
+        self.mouse_absolute = True
 
         self.mouse = Mouse.Mouse()
 
@@ -37,6 +38,7 @@ class Demo(Thread):
         # add hotkey
         keyboard.add_hotkey("esc", lambda: self.stop())
         keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())
+        keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         # add mouse_events
         self.signal_settings = {
             "pitch": {
@@ -77,7 +79,7 @@ class Demo(Thread):
                     continue
                 landmarks = results.multi_face_landmarks[0]
                 np_landmarks = np.array(
-                    [(lm.x*self.frame_width, lm.y*self.frame_height) for lm in landmarks.landmark])
+                    [(lm.x*self.frame_width, lm.y*self.frame_height, lm.z*self.frame_width) for lm in landmarks.landmark])
                 result = self.signal_calculator.process(np_landmarks)
 
 
@@ -88,7 +90,7 @@ class Demo(Thread):
                 self.raw_signal = result
 
                 if self.mouse_enabled:
-                    self.mouse.move(x_pixel, y_pixel, False)
+                    self.mouse.move(x_pixel, y_pixel, self.mouse_absolute)
                 # Debug
                 DrawingDebug.show_landmarks(landmarks, image)
                 # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
@@ -136,3 +138,6 @@ class Demo(Thread):
     def set_filter_value(self, name: str, filter_value: float):
         print(name)
         self.signal_calculator.set_filter_value(name, filter_value)
+
+    def toggle_mouse_mode(self):
+        self.mouse_absolute = not self.mouse_absolute
