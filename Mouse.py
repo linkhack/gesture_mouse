@@ -29,5 +29,13 @@ class Mouse:
     def enable_gesture(self):
         pass
 
+    def click(self, button):
+        """
+        Clicks the mouse button specified with button.
+        :param button: str, one of the buttons to click
+        :return:
+        """
+        mouse.click(button)
+
     def disable_gesture(self):
         pass

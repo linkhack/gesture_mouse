@@ -177,7 +177,6 @@ class KeyboardTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
 
-
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()

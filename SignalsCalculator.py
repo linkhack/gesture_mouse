@@ -24,11 +24,16 @@ class FilteredFloat:
         self.value = value
 
     def set(self, value):
+        """
+        Adds a new value to be filtered and returns the filtered value
+        :param value: New value to be filtered
+        """
         if self.use_filter:
             kalman = self.filter.update(value)
             self.value = np.real(kalman)
         else:
             self.value = value
+        return self.value
 
     def get(self):
         return self.value
