@@ -138,7 +138,8 @@ class SignalsCalculater:
             "Yaw": angles[1],
             "Roll": angles[2],
             "JawOpen": jaw_open,
-            "MouthPuck": mouth_puck
+            "MouthPuck": mouth_puck,
+            "screen_xy": self.result.screen_xy.get()
         }
 
         return signals

@@ -133,6 +133,7 @@ class SignalTab(QtWidgets.QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.setting_widget)
         self.layout.addWidget(self.scroll_area)
+
     def update_plots(self, signals):
         self.signals_vis.update_plot(signals)
 
@@ -162,15 +163,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.demo = Demo.Demo()
         self.central_widget = QtWidgets.QTabWidget()
-        self.signal_tab = SignalTab(self.demo, "config/iphone_default.json")
+        self.signal_setting_container = QtWidgets.QWidget()
+        self.signal_tab_iphone = SignalTab(self.demo, "config/iphone_default.json")
+        self.signal_tab_mediapipe = SignalTab(self.demo, "config/mediapipe_default.json")
+        self.signal_tab_iphone.setParent(self.signal_setting_container)
+        self.selected_signals = self.signal_tab_iphone
+
         self.general_tab = GeneralTab(self.demo)
+        self.general_tab.mediapipe_selector_button.clicked.connect(lambda selected: self.change_signals_tab(selected))
         self.keyboard_tab = KeyboardTab(self.demo)
         self.mouse_tab = MouseTab(self.demo)
 
         self.central_widget.addTab(self.general_tab, "General")
         self.central_widget.addTab(self.keyboard_tab, "Keyboard")
         self.central_widget.addTab(self.mouse_tab, "Mouse")
-        self.central_widget.addTab(self.signal_tab, "Signal")
+        self.central_widget.addTab(self.signal_setting_container, "Signal")
 
         self.setCentralWidget(self.central_widget)
 
@@ -184,7 +191,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update_plots(self):
         # TODO: move up again
-        self.signal_tab.update_plots(self.demo.signals)
+        self.selected_signals.update_plots(self.demo.signals)
+
+    def change_signals_tab(self, checked: bool):
+        if checked:
+            self.signal_tab_iphone.setParent(None)
+            self.signal_tab_mediapipe.setParent(self.signal_setting_container)
+            self.selected_signals = self.signal_tab_mediapipe
+        else:
+            self.signal_tab_mediapipe.setParent(None)
+            self.signal_tab_iphone.setParent(self.signal_setting_container)
+            self.selected_signals = self.signal_tab_iphone
+
 
 
 def test_gui():

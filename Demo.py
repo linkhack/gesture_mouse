@@ -85,7 +85,7 @@ class Demo(Thread):
 
                 ## Calculate point on screen
 
-                x_pixel, y_pixel = result.screen_xy.get()
+                x_pixel, y_pixel = result["screen_xy"]
 
                 # self.raw_signal = result
 
@@ -190,6 +190,7 @@ class Demo(Thread):
         :param json_path: Path to json
         """
         parsed_signals = json.load(open(json_path, "r"))
+        self.signals = dict()
         for json_signal in parsed_signals:
             # read values
             name = json_signal["name"]
