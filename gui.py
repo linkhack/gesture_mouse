@@ -100,7 +100,7 @@ class SignalTab(QtWidgets.QWidget):
         self.signals_vis.setMinimumHeight(100)
         size_policy = self.signals_vis.sizePolicy()
         size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Policy.Maximum)
-        size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Ignored)
+        size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Expanding)
         self.signals_vis.setSizePolicy(size_policy)
 
         ## Todo: maybe from json directly ??
@@ -162,11 +162,16 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
 
         self.demo = Demo.Demo()
+
         self.central_widget = QtWidgets.QTabWidget()
-        self.signal_setting_container = QtWidgets.QWidget()
+
         self.signal_tab_iphone = SignalTab(self.demo, "config/iphone_default.json")
         self.signal_tab_mediapipe = SignalTab(self.demo, "config/mediapipe_default.json")
-        self.signal_tab_iphone.setParent(self.signal_setting_container)
+
+        self.signals_tab = QtWidgets.QStackedWidget()
+        self.signals_tab.addWidget(self.signal_tab_iphone)
+        self.signals_tab.addWidget(self.signal_tab_mediapipe)
+        self.signals_tab.setCurrentIndex(0)
         self.selected_signals = self.signal_tab_iphone
 
         self.general_tab = GeneralTab(self.demo)
@@ -177,7 +182,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.addTab(self.general_tab, "General")
         self.central_widget.addTab(self.keyboard_tab, "Keyboard")
         self.central_widget.addTab(self.mouse_tab, "Mouse")
-        self.central_widget.addTab(self.signal_setting_container, "Signal")
+        self.central_widget.addTab(self.signals_tab, "Signal")
 
         self.setCentralWidget(self.central_widget)
 
@@ -195,12 +200,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def change_signals_tab(self, checked: bool):
         if checked:
-            self.signal_tab_iphone.setParent(None)
-            self.signal_tab_mediapipe.setParent(self.signal_setting_container)
+            self.signals_tab.setCurrentIndex(1)
             self.selected_signals = self.signal_tab_mediapipe
         else:
-            self.signal_tab_mediapipe.setParent(None)
-            self.signal_tab_iphone.setParent(self.signal_setting_container)
+            self.signals_tab.setCurrentIndex(0)
             self.selected_signals = self.signal_tab_iphone
 
 
