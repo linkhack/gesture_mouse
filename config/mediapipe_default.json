@@ -22,15 +22,15 @@
   },
   {
     "name": "JawOpen",
-    "lower_threshold": 3.0,
-    "higher_threshold": 6.0,
+    "lower_threshold": 3.7,
+    "higher_threshold": 4.8,
     "filter_value": 0.0001,
     "actions":  []
   },
   {
     "name": "MouthPuck",
-    "lower_threshold": 4.0,
-    "higher_threshold": 3.0,
+    "lower_threshold": 0.8,
+    "higher_threshold": 0.65,
     "filter_value": 0.0001,
     "actions":  []
   }
