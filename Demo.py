@@ -172,11 +172,7 @@ class Demo(Thread):
             self.enable_gesture_mouse()
 
     def set_filter_value(self, name: str, filter_value: float):
-        print(name)
-        self.signal_calculator.set_filter_value(name, filter_value)
-        signal = getattr(self.raw_signal, name, None)
-        if signal is not None:
-            signal.set_filter_value(filter_value)
+        self.signals[name].set_filter_value(filter_value)
 
     def set_use_mediapipe(self, selected):
         self.use_mediapipe = selected

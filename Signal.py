@@ -81,9 +81,10 @@ class Signal:
         It then updates the action associated with this signal
         :param value: new value of signal
         """
-        filtered_value = self.raw_value.set(value)
+        self.raw_value.set(value)
+        filtered_value = self.raw_value.get()
         self.scaled_value = max(
-            min((filtered_value - self.lower_threshold) / (self.higher_threshold - self.lower_threshold), 0.), 1.)
+            min((filtered_value - self.lower_threshold) / (self.higher_threshold - self.lower_threshold), 1.), 0.)
         self.action.update(value)
 
     def set_threshold(self, lower_threshold: float, higher_threshold: float):
@@ -97,11 +98,30 @@ class Signal:
         if higher_threshold is not None:
             self.higher_threshold = higher_threshold
 
+    def set_lower_threshold(self, lower_threshold: float):
+        """
+        Sets a new lower threshold, to scale signal into 0,1 range
+        :param lower_threshold: New threshold
+        :return:
+        """
+        print(self.name, lower_threshold)
+        self.lower_threshold = lower_threshold
+
+    def set_higher_threshold(self, higher_threshold: float):
+        """
+        Sets a new higher threshold, to scale signal into 0,1 range
+        :param higher_threshold: New threshold
+        :return:
+        """
+        print(self.name, higher_threshold)
+        self.higher_threshold = higher_threshold
+
     def set_filter_value(self, filter_value):
         """
         Sets the R parameter for the Kalman filter.
         :param filter_value: new value for filter, higher = stronger filter
         :return:
         """
+        print(self.name, filter_value)
         self.raw_value.set_filter_value(filter_value)
 

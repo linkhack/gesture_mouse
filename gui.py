@@ -53,7 +53,7 @@ class SignalVis(pg.PlotWidget):
     def update_plot(self, signals):
         x = time.time()
         for name, plot in self.lines.items():
-            y = signals[name].raw_value.get()
+            y = signals[name].scaled_value
             plot.plot(x, y)
 
 
@@ -63,12 +63,12 @@ class SignalSetting(QtWidgets.QWidget):
         self.name_label = QtWidgets.QLabel(name)
 
         self.lower_value = QtWidgets.QDoubleSpinBox()
-        self.lower_value.setMaximum(max_value)
-        self.lower_value.setMinimum(min_value)
+        self.lower_value.setValue(min_value)
+        self.lower_value.setSingleStep(0.01)
 
         self.higher_value = QtWidgets.QDoubleSpinBox()
-        self.higher_value.setMaximum(max_value)
-        self.higher_value.setMinimum(min_value)
+        self.higher_value.setValue(max_value)
+        self.higher_value.setSingleStep(0.01)
 
         self.filter_slider = LogarithmicSlider(orientation=QtCore.Qt.Orientation.Horizontal)
         self.filter_slider.setMinimum(min_filter)
@@ -122,7 +122,10 @@ class SignalTab(QtWidgets.QWidget):
 
             setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
             setting.visualization_checkbox.setChecked(False)
-            setting.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value(signal_name, x))
+
+            setting.filter_slider.doubleValueChanged.connect(lambda x, name=signal_name: self.demo.set_filter_value(name, x))
+            setting.lower_value.valueChanged.connect(lambda x, name=signal_name: self.demo.signals[name].set_lower_threshold(x))
+            setting.higher_value.valueChanged.connect(lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
 
             self.setting_widget.layout().addWidget(setting)
             self.signal_settings[signal_name] = setting
