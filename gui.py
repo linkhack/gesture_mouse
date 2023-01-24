@@ -42,7 +42,6 @@ class SignalVis(pg.PlotWidget):
         super(SignalVis, self).__init__()
         self.setBackground('w')
         self.lines = {}
-        self.sizePolicy()
 
     def add_line(self, name: str):
         pen = pg.mkPen(color=(255, 0, 0))
@@ -97,11 +96,20 @@ class SignalTab(QtWidgets.QWidget):
         self.signal_config_defaults = json.load(open(json_path, "r"))
         self.setWindowTitle("Signals Visualization")
         self.signals_vis = SignalVis()
+        self.signals_vis.setMaximumHeight(250)
+        self.signals_vis.setMinimumHeight(100)
+        size_policy = self.signals_vis.sizePolicy()
+        size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Policy.Maximum)
+        size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Ignored)
+        self.signals_vis.setSizePolicy(size_policy)
 
         ## Todo: maybe from json directly ??
         self.signal_settings = dict()
         self.layout = QtWidgets.QVBoxLayout(self)
+
         self.layout.addWidget(self.signals_vis)
+        self.setting_widget = QtWidgets.QWidget()
+        self.setting_widget.setLayout(QtWidgets.QVBoxLayout())
 
         for json_signal in self.signal_config_defaults:
             signal_name = json_signal["name"]
@@ -116,9 +124,15 @@ class SignalTab(QtWidgets.QWidget):
             setting.visualization_checkbox.setChecked(False)
             setting.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value(signal_name, x))
 
+            self.setting_widget.layout().addWidget(setting)
             self.signal_settings[signal_name] = setting
-            self.layout.addWidget(setting)
 
+        self.scroll_area = QtWidgets.QScrollArea()
+        self.scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setWidget(self.setting_widget)
+        self.layout.addWidget(self.scroll_area)
     def update_plots(self, signals):
         self.signals_vis.update_plot(signals)
 
@@ -177,7 +191,7 @@ def test_gui():
     pygame.init()
     app = QtWidgets.QApplication([])
     window = MainWindow()
-    window.resize(800, 600)
+    window.resize(1280, 720)
     window.show()
     app.exec()
 
