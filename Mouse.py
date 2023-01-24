@@ -1,6 +1,6 @@
 
 import mouse
-import pygame
+# import pygame
 
 
 class Mouse:

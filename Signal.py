@@ -97,15 +97,11 @@ class Signal:
         if higher_threshold is not None:
             self.higher_threshold = higher_threshold
 
-
-SIGNALS = {
-    "EyeBlinkLeft": Signal("EyeBlinkLeft"),
-    "EyeLookDownLeft": Signal("EyeLookDownLeft"),
-    "EyeLookInLeft": Signal("EyeLookInLeft"),
-    "EyeLookOutLeft": Signal("EyeLookOutLeft"),
-    "EyeLookUpLeft": Signal("EyeLookUpLeft"),
-    "EyeSquintLeft": Signal("EyeSquintLeft"),
-    "EyeWideLeft": Signal("EyeWideLeft"),
-
-}
+    def set_filter_value(self, filter_value):
+        """
+        Sets the R parameter for the Kalman filter.
+        :param filter_value: new value for filter, higher = stronger filter
+        :return:
+        """
+        self.raw_value.set_filter_value(filter_value)
 

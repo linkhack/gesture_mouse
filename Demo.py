@@ -2,6 +2,7 @@ import dataclasses
 import time
 from threading import Thread
 import socket
+import json
 
 import keyboard
 import mediapipe as mp
@@ -12,6 +13,7 @@ import Mouse
 import DrawingDebug
 import SignalsCalculator
 import monitor
+from Signal import Signal
 
 
 from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
@@ -47,30 +49,9 @@ class Demo(Thread):
         keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())
         keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         # add mouse_events
-        self.signal_settings = {
-            "pitch": {
-                "min": -90,
-                "max": +90,
-                "filter_value": 0.001
-            },
-            "yaw": {
-                "min": -90,
-                "max": +90,
-                "filter_value": 0.001
-            },
-            "roll": {
-                "min": -90,
-                "max": +90,
-                "filter_value": 0.001
-            },
-            "mouth_open": {
-                "min": -90,
-                "max": +90,
-                "filter_value": 0.001
-            }
-        }
         self.raw_signal = SignalsCalculator.SignalsResult()
         self.transformed_signals = SignalsCalculator.SignalsResult()
+        self.signals = dict()
 
     def run(self):
         self.is_running = True
@@ -80,6 +61,7 @@ class Demo(Thread):
                 self.__run_mediapipe()
                 self.__stop_camera()
             else:
+                self.setup_signals("config/iphone_default.json")
                 self.__start_socket()
                 self.__run_livelinkface()
                 self.__stop_socket()
@@ -122,14 +104,9 @@ class Demo(Thread):
                 success = False
 
             if success:
-                self.raw_signal.pitch.set(live_link_face.get_blendshape(FaceBlendShape.HeadPitch))
-                self.raw_signal.yaw.set(live_link_face.get_blendshape(FaceBlendShape.HeadYaw))
-                self.raw_signal.roll.set(live_link_face.get_blendshape(FaceBlendShape.HeadYaw))
-                self.raw_signal.mouth_puck.set(live_link_face.get_blendshape(FaceBlendShape.MouthPucker))
-                self.raw_signal.jaw_open.set(live_link_face.get_blendshape(FaceBlendShape.JawOpen))
-                self.raw_signal.debug1.set(live_link_face.get_blendshape(FaceBlendShape.BrowInnerUp))
-                self.raw_signal.debug2.set(live_link_face.get_blendshape(FaceBlendShape.EyeBlinkRight))
-                self.raw_signal.debug3.set(live_link_face.get_blendshape(FaceBlendShape.CheekPuff))
+                for signal_name in self.signals:
+                    value = live_link_face.get_blendshape(FaceBlendShape[signal_name])
+                    self.signals[signal_name].set_value(value)
 
     def __start_camera(self):
         self.cam_cap = cv2.VideoCapture(0)
@@ -203,3 +180,22 @@ class Demo(Thread):
 
     def toggle_mouse_mode(self):
         self.mouse_absolute = not self.mouse_absolute
+
+    def setup_signals(self, json_path: str):
+        """
+        Reads a config file and setup ups the available signals.
+        :param json_path: Path to json
+        """
+        parsed_signals = json.load(open(json_path, "r"))
+        for json_signal in parsed_signals:
+            # read values
+            name = json_signal["name"]
+            lower_threshold = json_signal["lower_threshold"]
+            higher_threshold = json_signal["higher_threshold"]
+            filter_value = json_signal["filter_value"]
+
+            # construct signal
+            signal = Signal(name)
+            signal.set_filter_value(filter_value)
+            signal.set_threshold(lower_threshold, higher_threshold)
+            self.signals[name] = signal
