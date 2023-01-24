@@ -119,18 +119,29 @@ class SignalsCalculater:
         rotationmat = r.as_matrix()
         angles = r.as_euler("xyz", degrees=True)
         #normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
-        self.result.rvec = rvec
+        self.result.rvec = rvec # TODO: result not needed anymore
         self.result.tvec = tvec
         self.result.yaw.set(angles[1])
         self.result.pitch.set(angles[0])
         self.result.roll.set(angles[2])
         self.result.nosetip = rotationmat@self.head_pose_calculator.canonical_metric_landmarks[1, :]+tvec.squeeze()
-        self.result.jaw_open.set(self.get_jaw_open(landmarks))
-        self.result.mouth_puck.set(self.get_mouth_puck(landmarks))
+        jaw_open = self.get_jaw_open(landmarks)
+        self.result.jaw_open.set(jaw_open)
+        mouth_puck = self.get_mouth_puck(landmarks)
+        self.result.mouth_puck.set(mouth_puck)
         screen_xy = self.get_screen_intersection()
         screen_xy = np.array(screen_xy)
         self.result.screen_xy.set(screen_xy)
-        return self.result
+
+        signals = {
+            "Pitch": angles[0],
+            "Yaw": angles[1],
+            "Roll": angles[2],
+            "JawOpen": jaw_open,
+            "MouthPuck": mouth_puck
+        }
+
+        return signals
 
     def process_neutral(self, landmarks):
         pass

@@ -15,7 +15,6 @@ import SignalsCalculator
 import monitor
 from Signal import Signal
 
-
 from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
 
 mp_face_mesh = mp.solutions.face_mesh
@@ -38,7 +37,7 @@ class Demo(Thread):
 
         self.monitor = monitor.monitor()
 
-        self.camera_parameters = (800, 800, 1280/2, 720/2)
+        self.camera_parameters = (800, 800, 1280 / 2, 720 / 2)
         self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters)
         self.signal_calculator.set_filter_value("screen_xy", 0.022)
 
@@ -57,6 +56,7 @@ class Demo(Thread):
         self.is_running = True
         while self.is_running:
             if self.use_mediapipe:
+                self.setup_signals("config/mediapipe_default.json")
                 self.__start_camera()
                 self.__run_mediapipe()
                 self.__stop_camera()
@@ -87,7 +87,11 @@ class Demo(Thread):
 
                 x_pixel, y_pixel = result.screen_xy.get()
 
-                self.raw_signal = result
+                # self.raw_signal = result
+
+                for signal_name in self.signals:
+                    value = result[signal_name]
+                    self.signals[signal_name].set_value(value)
 
                 if self.mouse_enabled:
                     self.mouse.move(x_pixel, y_pixel, self.mouse_absolute)
@@ -176,7 +180,6 @@ class Demo(Thread):
 
     def set_use_mediapipe(self, selected):
         self.use_mediapipe = selected
-
 
     def toggle_mouse_mode(self):
         self.mouse_absolute = not self.mouse_absolute

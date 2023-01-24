@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Pitch",
+    "lower_threshold": -45.0,
+    "higher_threshold": 45.0,
+    "filter_value": 0.0001,
+    "actions":  []
+  },
+  {
+    "name": "Roll",
+    "lower_threshold": -45.0,
+    "higher_threshold": 45.0,
+    "filter_value": 0.0001,
+    "actions":  []
+  },
+  {
+    "name": "Yaw",
+    "lower_threshold": -45.0,
+    "higher_threshold": 45.0,
+    "filter_value": 0.0001,
+    "actions":  []
+  },
+  {
+    "name": "JawOpen",
+    "lower_threshold": 3.0,
+    "higher_threshold": 6.0,
+    "filter_value": 0.0001,
+    "actions":  []
+  },
+  {
+    "name": "MouthPuck",
+    "lower_threshold": 4.0,
+    "higher_threshold": 3.0,
+    "filter_value": 0.0001,
+    "actions":  []
+  }
+]
