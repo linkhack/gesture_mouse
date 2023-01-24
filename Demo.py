@@ -111,6 +111,8 @@ class Demo(Thread):
                 for signal_name in self.signals:
                     value = live_link_face.get_blendshape(FaceBlendShape[signal_name])
                     self.signals[signal_name].set_value(value)
+                if self.mouse_enabled:
+                    self.mouse.process_signal(self.signals)
 
     def __start_camera(self):
         self.cam_cap = cv2.VideoCapture(0)

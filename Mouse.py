@@ -1,6 +1,7 @@
 
 import mouse
 # import pygame
+import screeninfo
 
 
 class Mouse:
@@ -8,6 +9,12 @@ class Mouse:
         self.x = 0
         self.y = 0
         self.mouse_listener = None
+
+        monitors = screeninfo.get_monitors()
+        default_screen = monitors[0]  # TODO: multiscreen?
+
+        self.h_pixels = default_screen.height
+        self.w_pixels = default_screen.width
 
     def move(self, x: int, y: int, absolute: bool = True):
         if absolute:
@@ -25,6 +32,14 @@ class Mouse:
         self.x = x
         self.y = y
         return True
+
+    def process_signal(self, signals):
+        # TODO: move this around, possibilities: MosueAction / select signals in demo / select signals in mouse
+        updown = "HeadPitch"
+        leftright = "HeadYaw"
+        y_pixel = self.h_pixels*signals[updown].scaled_value
+        x_pixel = self.w_pixels*signals[leftright].scaled_value
+        self.move(x_pixel, y_pixel)
 
     def enable_gesture(self):
         pass
