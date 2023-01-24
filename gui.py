@@ -5,6 +5,7 @@ from gui_widgets import LogarithmicSlider
 import pyqtgraph as pg
 import time
 import pygame
+import json
 
 import Demo
 import SignalsCalculator
@@ -35,11 +36,13 @@ class PlotLine:
         self.plot_data_item.setVisible(visibility)
 
 
+
 class SignalVis(pg.PlotWidget):
     def __init__(self):
         super(SignalVis, self).__init__()
         self.setBackground('w')
         self.lines = {}
+        self.sizePolicy()
 
     def add_line(self, name: str):
         pen = pg.mkPen(color=(255, 0, 0))
@@ -51,7 +54,7 @@ class SignalVis(pg.PlotWidget):
     def update_plot(self, signals):
         x = time.time()
         for name, plot in self.lines.items():
-            y = getattr(signals, name).get()
+            y = signals[name].raw_value.get()
             plot.plot(x, y)
 
 
@@ -88,71 +91,33 @@ class SignalSetting(QtWidgets.QWidget):
 
 
 class SignalTab(QtWidgets.QWidget):
-    def __init__(self, demo):
-        #TODO: move signals to file
+    def __init__(self, demo, json_path):
         super().__init__()
         self.demo = demo
+        self.signal_config_defaults = json.load(open(json_path, "r"))
         self.setWindowTitle("Signals Visualization")
         self.signals_vis = SignalVis()
 
-        self.pitch = SignalSetting("pitch", -90., 90.)
-        handler = self.signals_vis.add_line("pitch")
-        self.pitch.visualization_checkbox.stateChanged.connect(handler.set_visible)
-        self.pitch.visualization_checkbox.setChecked(False)
-        self.pitch.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value("pitch", x))
-
-        self.roll = SignalSetting("roll", -90., 90.)
-        handler = self.signals_vis.add_line("roll")
-        self.roll.visualization_checkbox.stateChanged.connect(handler.set_visible)
-        self.roll.visualization_checkbox.setChecked(False)
-        self.roll.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value("roll", x))
-
-        self.yaw = SignalSetting("yaw", -90., 90.)
-        handler = self.signals_vis.add_line("yaw")
-        self.yaw.visualization_checkbox.stateChanged.connect(handler.set_visible)
-        self.yaw.visualization_checkbox.setChecked(False)
-        self.yaw.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value("yaw", x))
-
-        self.jaw_open = SignalSetting("jaw_open", 0, 50)
-        handler = self.signals_vis.add_line("jaw_open")
-        self.jaw_open.visualization_checkbox.stateChanged.connect(handler.set_visible)
-        self.jaw_open.visualization_checkbox.setChecked(False)
-        self.jaw_open.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value("jaw_open", x))
-
-        self.mouth_puck = SignalSetting("mouth_puck", 0, 50)
-        handler = self.signals_vis.add_line("mouth_puck")
-        self.mouth_puck.visualization_checkbox.stateChanged.connect(handler.set_visible)
-        self.mouth_puck.visualization_checkbox.setChecked(False)
-        self.mouth_puck.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value("mouth_puck", x))
-
-        self.debug1 = SignalSetting("debug1", 0, 50)
-        handler = self.signals_vis.add_line("debug1")
-        self.debug1.visualization_checkbox.stateChanged.connect(handler.set_visible)
-        self.debug1.visualization_checkbox.setChecked(False)
-        self.debug1.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value("debug1", x))
-
-        self.debug2 = SignalSetting("debug2", 0, 50)
-        handler = self.signals_vis.add_line("debug2")
-        self.debug2.visualization_checkbox.stateChanged.connect(handler.set_visible)
-        self.debug2.visualization_checkbox.setChecked(False)
-        self.debug2.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value("debug2", x))
-
-        self.debug3 = SignalSetting("debug3", 0, 50)
-        handler = self.signals_vis.add_line("debug3")
-        self.debug3.visualization_checkbox.stateChanged.connect(handler.set_visible)
-        self.debug3.visualization_checkbox.setChecked(False)
-        self.debug3.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value("debug3", x))
-
+        ## Todo: maybe from json directly ??
+        self.signal_settings = dict()
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.signals_vis)
-        self.layout.addWidget(self.pitch)
-        self.layout.addWidget(self.roll)
-        self.layout.addWidget(self.yaw)
-        self.layout.addWidget(self.jaw_open)
-        self.layout.addWidget(self.mouth_puck)
-        self.layout.addWidget(self.debug1)
-        self.layout.addWidget(self.debug2)
-        self.layout.addWidget(self.debug3)
+
+        for json_signal in self.signal_config_defaults:
+            signal_name = json_signal["name"]
+            lower_threshold = json_signal["lower_threshold"]
+            higher_threshold = json_signal["higher_threshold"]
+            filter_value = json_signal["filter_value"]
+
+            setting = SignalSetting(signal_name, lower_threshold, higher_threshold)
+            handler = self.signals_vis.add_line(signal_name)
+
+            setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
+            setting.visualization_checkbox.setChecked(False)
+            setting.filter_slider.doubleValueChanged.connect(lambda x: self.demo.set_filter_value(signal_name, x))
+
+            self.signal_settings[signal_name] = setting
+            self.layout.addWidget(setting)
 
     def update_plots(self, signals):
         self.signals_vis.update_plot(signals)
@@ -180,10 +145,10 @@ class KeyboardTab(QtWidgets.QWidget):
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.demo = Demo.Demo()
 
+        self.demo = Demo.Demo()
         self.central_widget = QtWidgets.QTabWidget()
-        self.signal_tab = SignalTab(self.demo)
+        self.signal_tab = SignalTab(self.demo, "config/iphone_default.json")
         self.general_tab = GeneralTab(self.demo)
         self.keyboard_tab = KeyboardTab(self.demo)
         self.mouse_tab = MouseTab(self.demo)
@@ -201,12 +166,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.start()
 
         ## Signals
-
         self.demo.start()
 
     def update_plots(self):
         # TODO: move up again
-        self.signal_tab.update_plots(self.demo.raw_signal)
+        self.signal_tab.update_plots(self.demo.signals)
 
 
 def test_gui():
