@@ -70,7 +70,7 @@ class Signal:
         self.name = name
         self.raw_value: FilteredFloat = FilteredFloat(0, 0.0001)
         self.scaled_value: float = 0.
-        self.action: Action = Action()  # TODO: maybe list (multiple actions triggered with one event)
+        self.action: Action = Action()  # TODO: maybe list (multiple actions triggered with one event) and API
         self.lower_threshold: float = 0.
         self.higher_threshold: float = 1.
 

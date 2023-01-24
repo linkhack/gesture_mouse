@@ -1,5 +1,7 @@
 import sys
+from typing import List
 
+import mouse
 from PySide6 import QtWidgets, QtCore, QtGui
 from gui_widgets import LogarithmicSlider
 import pyqtgraph as pg
@@ -9,6 +11,7 @@ import json
 
 import Demo
 import SignalsCalculator
+import Signal
 
 
 class PlotLine:
@@ -34,7 +37,6 @@ class PlotLine:
 
     def set_visible(self, visibility):
         self.plot_data_item.setVisible(visibility)
-
 
 
 class SignalVis(pg.PlotWidget):
@@ -127,9 +129,12 @@ class SignalTab(QtWidgets.QWidget):
             setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
             setting.visualization_checkbox.setChecked(False)
 
-            setting.filter_slider.doubleValueChanged.connect(lambda x, name=signal_name: self.demo.set_filter_value(name, x))
-            setting.lower_value.valueChanged.connect(lambda x, name=signal_name: self.demo.signals[name].set_lower_threshold(x))
-            setting.higher_value.valueChanged.connect(lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
+            setting.filter_slider.doubleValueChanged.connect(
+                lambda x, name=signal_name: self.demo.set_filter_value(name, x))
+            setting.lower_value.valueChanged.connect(
+                lambda x, name=signal_name: self.demo.signals[name].set_lower_threshold(x))
+            setting.higher_value.valueChanged.connect(
+                lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
 
             self.setting_widget.layout().addWidget(setting)
             self.signal_settings[signal_name] = setting
@@ -155,14 +160,60 @@ class GeneralTab(QtWidgets.QWidget):
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.mediapipe_selector_button)
 
+
 class MouseTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
+        self.demo = demo
+        layout = QtWidgets.QVBoxLayout(self)
+        self.left_click_settings = MouseClickSettings("Left Click")
+        self.left_click_settings.signal_selector.currentTextChanged.connect(self.set_left_click)
+        self.right_click_settings = MouseClickSettings("Right Click")
+        self.right_click_settings.signal_selector.currentTextChanged.connect(self.set_right_click)
+        self.double_click_settings = MouseClickSettings("Double Click")
+        self.double_click_settings.signal_selector.currentTextChanged.connect(self.set_double_click)
+        layout.addWidget(self.left_click_settings)
+        layout.addWidget(self.right_click_settings)
+        layout.addWidget(self.double_click_settings)
+
+    def set_signal_selector(self, signals: List[str]):
+        self.left_click_settings.signal_selector.clear()
+        self.left_click_settings.signal_selector.addItems(signals)
+        self.right_click_settings.signal_selector.clear()
+        self.right_click_settings.signal_selector.addItems(signals)
+        self.double_click_settings.signal_selector.clear()
+        self.double_click_settings.signal_selector.addItems(signals)
+
+    def set_left_click(self, selected_text: str):
+        action = Signal.Action()
+        action.up_action = lambda: self.demo.mouse.click(mouse.LEFT)
+        self.demo.signals[selected_text].action = action
+
+    def set_right_click(self, selected_text: str):
+        action = Signal.Action()
+        action.up_action = lambda: self.demo.mouse.click(mouse.RIGHT)
+        self.demo.signals[selected_text].action = action
+
+    def set_double_click(self, selected_text: str):
+        action = Signal.Action()
+        action.up_action = lambda: self.demo.mouse.double_click(mouse.LEFT)
+        self.demo.signals[selected_text].action = action
+
+
+class MouseClickSettings(QtWidgets.QWidget):
+    def __init__(self, name):
+        super().__init__()
+        layout = QtWidgets.QHBoxLayout(self)
+        self.label = QtWidgets.QLabel(name)
+        self.signal_selector = QtWidgets.QComboBox()
+        layout.addWidget(self.label)
+        layout.addWidget(self.signal_selector)
 
 
 class KeyboardTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -185,6 +236,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.general_tab.mediapipe_selector_button.clicked.connect(lambda selected: self.change_signals_tab(selected))
         self.keyboard_tab = KeyboardTab(self.demo)
         self.mouse_tab = MouseTab(self.demo)
+        self.mouse_tab.set_signal_selector(list(self.selected_signals.signal_settings.keys()))
 
         self.central_widget.addTab(self.general_tab, "General")
         self.central_widget.addTab(self.keyboard_tab, "Keyboard")
@@ -212,7 +264,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.signals_tab.setCurrentIndex(0)
             self.selected_signals = self.signal_tab_iphone
-
+        self.mouse_tab.set_signal_selector(list(self.selected_signals.signal_settings.keys()))
 
 
 def test_gui():
