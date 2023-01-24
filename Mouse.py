@@ -37,8 +37,8 @@ class Mouse:
         # TODO: move this around, possibilities: MosueAction / select signals in demo / select signals in mouse
         updown = "HeadPitch"
         leftright = "HeadYaw"
-        y_pixel = self.h_pixels*signals[updown].scaled_value
-        x_pixel = self.w_pixels*signals[leftright].scaled_value
+        y_pixel = self.h_pixels*(1-signals[updown].scaled_value)
+        x_pixel = self.w_pixels*(1-signals[leftright].scaled_value)
         self.move(x_pixel, y_pixel)
 
     def enable_gesture(self):
