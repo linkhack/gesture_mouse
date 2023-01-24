@@ -1,14 +1,21 @@
+import pickle
+
 from SignalsCalculator import FilteredFloat
 import keyboard
 from typing import Callable
+import mouse
+
+
+def null_f():
+    pass
 
 
 class Action:
     def __init__(self):
         self.old_value: float = 0.
-        self.up_action: Callable[[], None] = lambda: None
-        self.down_action: Callable[[], None] = lambda: None
-        self.hold_action: Callable[[], None] = lambda: None
+        self.up_action: Callable[[], None] = null_f
+        self.down_action: Callable[[], None] = null_f
+        self.hold_action: Callable[[], None] = null_f
         self.threshold: float = 0.5
 
     def update(self, value: float):
@@ -81,7 +88,24 @@ class Signal:
 
     def set_threshold(self, lower_threshold: float, higher_threshold: float):
         """
-        Sets the lower and higher threshold
-        :param lower_threshold:
-        :param higher_threshold:
+        Sets the lower and higher threshold. Keeps the old threshold if lower or higher threshold is None
+        :param lower_threshold: New value for lower threshold or None
+        :param higher_threshold: New value for higher threshold or None
         """
+        if lower_threshold is not None:
+            self.lower_threshold = lower_threshold
+        if higher_threshold is not None:
+            self.higher_threshold = higher_threshold
+
+
+SIGNALS = {
+    "EyeBlinkLeft": Signal("EyeBlinkLeft"),
+    "EyeLookDownLeft": Signal("EyeLookDownLeft"),
+    "EyeLookInLeft": Signal("EyeLookInLeft"),
+    "EyeLookOutLeft": Signal("EyeLookOutLeft"),
+    "EyeLookUpLeft": Signal("EyeLookUpLeft"),
+    "EyeSquintLeft": Signal("EyeSquintLeft"),
+    "EyeWideLeft": Signal("EyeWideLeft"),
+
+}
+
