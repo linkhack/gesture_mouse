@@ -85,7 +85,8 @@ class Signal:
         filtered_value = self.raw_value.get()
         self.scaled_value = max(
             min((filtered_value - self.lower_threshold) / (self.higher_threshold - self.lower_threshold), 1.), 0.)
-        self.action.update(value)
+        if self.action is not None:
+            self.action.update(self.scaled_value)
 
     def set_threshold(self, lower_threshold: float, higher_threshold: float):
         """

@@ -167,10 +167,13 @@ class MouseTab(QtWidgets.QWidget):
         self.demo = demo
         layout = QtWidgets.QVBoxLayout(self)
         self.left_click_settings = MouseClickSettings("Left Click")
+        self.left_click_signal = "-"
         self.left_click_settings.signal_selector.currentTextChanged.connect(self.set_left_click)
         self.right_click_settings = MouseClickSettings("Right Click")
+        self.right_click_signal = "-"
         self.right_click_settings.signal_selector.currentTextChanged.connect(self.set_right_click)
         self.double_click_settings = MouseClickSettings("Double Click")
+        self.double_click_signal = "-"
         self.double_click_settings.signal_selector.currentTextChanged.connect(self.set_double_click)
         layout.addWidget(self.left_click_settings)
         layout.addWidget(self.right_click_settings)
@@ -178,23 +181,48 @@ class MouseTab(QtWidgets.QWidget):
 
     def set_signal_selector(self, signals: List[str]):
         self.left_click_settings.signal_selector.clear()
+        self.left_click_settings.signal_selector.addItems("-")
         self.left_click_settings.signal_selector.addItems(signals)
         self.right_click_settings.signal_selector.clear()
+        self.right_click_settings.signal_selector.addItems("-")
         self.right_click_settings.signal_selector.addItems(signals)
         self.double_click_settings.signal_selector.clear()
+        self.double_click_settings.signal_selector.addItems("-")
         self.double_click_settings.signal_selector.addItems(signals)
+        print(self.left_click_signal)
 
     def set_left_click(self, selected_text: str):
+        if selected_text == "":
+            return
+        if self.left_click_signal != "-":
+            self.demo.signals[self.left_click_signal].action = None  # TODO action list instead of single action?
+        self.left_click_signal = selected_text
+        if selected_text == "-":
+            return
         action = Signal.Action()
         action.up_action = lambda: self.demo.mouse.click(mouse.LEFT)
         self.demo.signals[selected_text].action = action
 
     def set_right_click(self, selected_text: str):
+        if selected_text == "":
+            return
+        if self.right_click_signal != "-":
+            self.demo.signals[self.right_click_signal].action = None  # TODO action list instead of single action?
+        self.right_click_signal = selected_text
+        if selected_text == "-":
+            return
         action = Signal.Action()
         action.up_action = lambda: self.demo.mouse.click(mouse.RIGHT)
         self.demo.signals[selected_text].action = action
 
     def set_double_click(self, selected_text: str):
+        if selected_text == "":
+            return
+        if self.double_click_signal != "-":
+            self.demo.signals[self.double_click_signal].action = None  # TODO action list instead of single action?
+        self.right_click_signal = selected_text
+        if selected_text == "-":
+            return
         action = Signal.Action()
         action.up_action = lambda: self.demo.mouse.double_click(mouse.LEFT)
         self.demo.signals[selected_text].action = action
