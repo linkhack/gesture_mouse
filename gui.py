@@ -65,16 +65,16 @@ class SignalSetting(QtWidgets.QWidget):
         self.name_label = QtWidgets.QLabel(name)
 
         self.lower_value = QtWidgets.QDoubleSpinBox()
-        self.lower_value.setValue(min_value)
         self.lower_value.setSingleStep(0.01)
         self.lower_value.setMinimum(-100.)
         self.lower_value.setMaximum(100.)
+        self.lower_value.setValue(min_value)
 
         self.higher_value = QtWidgets.QDoubleSpinBox()
-        self.higher_value.setValue(max_value)
         self.higher_value.setSingleStep(0.01)
-        self.lower_value.setMinimum(-100.)
-        self.lower_value.setMaximum(100.)
+        self.higher_value.setMinimum(-100.)
+        self.higher_value.setMaximum(100.)
+        self.higher_value.setValue(max_value)
 
         self.filter_slider = LogarithmicSlider(orientation=QtCore.Qt.Orientation.Horizontal)
         self.filter_slider.setMinimum(min_filter)

@@ -44,7 +44,7 @@ class Demo(Thread):
 
         self.use_mediapipe = False
         self.filter_landmarks = False
-        self.landmark_kalman = [Kalman1D(R=0.01 ** 2) for _ in range(468)]
+        self.landmark_kalman = [Kalman1D(R=0.003 ** 2) for _ in range(468)]
 
 
         # add hotkey
@@ -104,7 +104,7 @@ class Demo(Thread):
                     self.signals[signal_name].set_value(value)
 
                 if self.mouse_enabled:
-                    self.mouse.move(x_pixel, y_pixel, self.mouse_absolute)
+                    self.mouse.process_signal(self.signals)
                 # Debug
                 DrawingDebug.show_landmarks(landmarks, image)
                 # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)

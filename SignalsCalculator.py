@@ -134,9 +134,9 @@ class SignalsCalculater:
         self.result.screen_xy.set(screen_xy)
 
         signals = {
-            "Pitch": angles[0],
-            "Yaw": angles[1],
-            "Roll": angles[2],
+            "HeadPitch": angles[0],
+            "HeadYaw": angles[1],
+            "HeadRoll": angles[2],
             "JawOpen": jaw_open,
             "MouthPuck": mouth_puck,
             "screen_xy": self.result.screen_xy.get()
