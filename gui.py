@@ -154,11 +154,15 @@ class GeneralTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
         self.demo = demo
-        self.mediapipe_selector_button = QtWidgets.QRadioButton(text="Use web cam tracking.")
+        self.mediapipe_selector_button = QtWidgets.QCheckBox(text="Use web cam tracking.")
         self.mediapipe_selector_button.setChecked(False)
         self.mediapipe_selector_button.clicked.connect(lambda selected: self.demo.set_use_mediapipe(selected))
+        self.landmark_filter_button = QtWidgets.QCheckBox(text="Filter Landmarks.")
+        self.landmark_filter_button.setChecked(False)
+        self.landmark_filter_button.clicked.connect(lambda selected: self.demo.set_filter_landmarks(selected))
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.mediapipe_selector_button)
+        self.layout.addWidget(self.landmark_filter_button)
 
 
 class MouseTab(QtWidgets.QWidget):

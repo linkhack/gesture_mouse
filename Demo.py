@@ -14,6 +14,7 @@ import DrawingDebug
 import SignalsCalculator
 import monitor
 from Signal import Signal
+from KalmanFilter1D import Kalman1D
 
 from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
 
@@ -37,11 +38,14 @@ class Demo(Thread):
 
         self.monitor = monitor.monitor()
 
-        self.camera_parameters = (800, 800, 1280 / 2, 720 / 2)
+        self.camera_parameters = (1000, 1000, 1280 / 2, 720 / 2)
         self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters)
         self.signal_calculator.set_filter_value("screen_xy", 0.022)
 
         self.use_mediapipe = False
+        self.filter_landmarks = False
+        self.landmark_kalman = [Kalman1D(R=0.01 ** 2) for _ in range(468)]
+
 
         # add hotkey
         keyboard.add_hotkey("esc", lambda: self.stop())
@@ -81,6 +85,12 @@ class Demo(Thread):
                 np_landmarks = np.array(
                     [(lm.x * self.frame_width, lm.y * self.frame_height, lm.z * self.frame_width) for lm in
                      landmarks.landmark])
+                if self.filter_landmarks:
+                    for i in range(468):
+                        kalman_filters_landm_complex = self.landmark_kalman[i].update(np_landmarks[i, 0] + 1j * np_landmarks[i, 1])
+                        np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
+                            kalman_filters_landm_complex)
+
                 result = self.signal_calculator.process(np_landmarks)
 
                 ## Calculate point on screen
@@ -176,8 +186,11 @@ class Demo(Thread):
     def set_filter_value(self, name: str, filter_value: float):
         self.signals[name].set_filter_value(filter_value)
 
-    def set_use_mediapipe(self, selected):
+    def set_use_mediapipe(self, selected: bool):
         self.use_mediapipe = selected
+
+    def set_filter_landmarks(self, enabled: bool):
+        self.filter_landmarks = enabled
 
     def toggle_mouse_mode(self):
         self.mouse_absolute = not self.mouse_absolute
