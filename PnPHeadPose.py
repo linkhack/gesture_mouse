@@ -440,7 +440,7 @@ class PnPHeadPose:
                                           (263, 0.058724168688059), (284, 0.007667080033571), (297, 0.009078059345484),
                                           (346, 0.009791937656701), (348, 0.014565368182957), (350, 0.018591361120343),
                                           (356, 0.005197994410992), (358, 0.120625205338001), (361, 0.005560018587857),
-                                          (362, 0.05328618362546),  (372, 0.014816547743976),
+                                          (362, 0.05328618362546), (372, 0.014816547743976),
                                           (376, 0.014262833632529), (420, 0.025462191551924), (425, 0.047252278774977)]
         self.canonical_metric_landmarks = np.reshape(self.canonical_metric_landmarks,
                                                      (self.canonical_metric_landmarks.shape[0] // 5, 5))
@@ -450,7 +450,7 @@ class PnPHeadPose:
         rotate_mat = np.asarray([[1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=np.float64)
         self.canonical_metric_landmarks = np.matmul(self.canonical_metric_landmarks.reshape(-1, 3), rotate_mat)
 
-        self.points_idx = [key for (key, val) in self.procrustes_landmark_basis]
+        self.points_idx = list(range(468))
         self.points_idx = list(set(self.points_idx))
         self.points_idx.sort()
 
@@ -458,8 +458,6 @@ class PnPHeadPose:
         self.LEFT_EYE = {idx for connection in mp.solutions.face_mesh.FACEMESH_LEFT_EYE for idx in connection}
         self.RIGHT_EYE = {idx for connection in mp.solutions.face_mesh.FACEMESH_RIGHT_EYE for idx in connection}
         self.eye_idx = list(self.LEFT_EYE.union(self.RIGHT_EYE))
-
-
 
     def fit_func(self, landmarks, camera_parameters):
         fx, fy, cx, cy = camera_parameters

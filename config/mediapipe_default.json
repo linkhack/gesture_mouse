@@ -1,22 +1,22 @@
 [
   {
     "name": "HeadPitch",
-    "lower_threshold": 45.0,
-    "higher_threshold": -45.0,
+    "lower_threshold": 25.0,
+    "higher_threshold": -25.0,
     "filter_value": 0.0001,
     "actions":  []
   },
   {
     "name": "HeadRoll",
-    "lower_threshold": -45.0,
-    "higher_threshold": 45.0,
+    "lower_threshold": -25.0,
+    "higher_threshold": 25.0,
     "filter_value": 0.0001,
     "actions":  []
   },
   {
     "name": "HeadYaw",
-    "lower_threshold": 45.0,
-    "higher_threshold": -45.0,
+    "lower_threshold": 25.0,
+    "higher_threshold": -25.0,
     "filter_value": 0.0001,
     "actions":  []
   },
