@@ -109,7 +109,6 @@ class SignalTab(QtWidgets.QWidget):
         size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Expanding)
         self.signals_vis.setSizePolicy(size_policy)
 
-        ## Todo: maybe from json directly ??
         self.signal_settings = dict()
         self.layout = QtWidgets.QVBoxLayout(self)
 
@@ -193,7 +192,6 @@ class MouseTab(QtWidgets.QWidget):
         self.double_click_settings.signal_selector.clear()
         self.double_click_settings.signal_selector.addItems("-")
         self.double_click_settings.signal_selector.addItems(signals)
-        print(self.left_click_signal)
 
     def set_left_click(self, selected_text: str):
         if selected_text == "":
@@ -242,9 +240,57 @@ class MouseClickSettings(QtWidgets.QWidget):
         layout.addWidget(self.signal_selector)
 
 
+class KeyboardActionWidget(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.layout = QtWidgets.QHBoxLayout(self)
+        self.threshold = QtWidgets.QDoubleSpinBox(self)
+        self.threshold.setMinimum(0.)
+        self.threshold.setMaximum(1.)
+        self.threshold.setSingleStep(0.01)
+        self.signal_selector = QtWidgets.QComboBox()
+        self.action_trigger_selector = QtWidgets.QComboBox()
+        self.action_trigger_selector.addItems(["-", "up", "down", "hold"])
+        self.action_type_selector = QtWidgets.QComboBox()
+        self.action_type_selector.addItems(["-", "press", "release", "hold"])
+        self.key_input = QtWidgets.QKeySequenceEdit()
+        self.key_input.setClearButtonEnabled(True)
+        self.layout.addWidget(self.signal_selector)
+        self.layout.addWidget(self.threshold)
+        self.layout.addWidget(self.action_trigger_selector)
+        self.layout.addWidget(self.action_type_selector)
+        self.layout.addWidget(self.key_input)
+
+    def set_signal_selector(self, signals: List[str]):
+        self.signal_selector.clear()
+        self.signal_selector.addItems("-")
+        self.signal_selector.addItems(signals)
+        self.signal_selector.adjustSize()
+
+
 class KeyboardTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
+        self.add_action_button = QtWidgets.QPushButton("Add Action")
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.add_action_button, alignment=QtCore.Qt.AlignmentFlag.AlignTop)
+        self.add_action_button.clicked.connect(self.add_action)
+        self.layout.addStretch()
+        self.actions: List[KeyboardActionWidget] = []
+        self.signals: List[str] = []
+
+    def add_action(self):
+        action_widget = KeyboardActionWidget()
+        self.layout.insertWidget(self.layout.count() - 1, action_widget)
+        self.actions.append(action_widget)
+        action_widget.set_signal_selector(self.signals)
+
+    def set_signals(self, signals: List[str]):
+        # Todo: remove actions, then load saved, then set combo-boxes
+        self.signals = signals
+        for action in self.actions:
+            action.set_signal_selector(signals)
+
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -261,14 +307,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.signals_tab = QtWidgets.QStackedWidget()
         self.signals_tab.addWidget(self.signal_tab_iphone)
         self.signals_tab.addWidget(self.signal_tab_mediapipe)
-        self.signals_tab.setCurrentIndex(0)
-        self.selected_signals = self.signal_tab_iphone
 
         self.general_tab = GeneralTab(self.demo)
         self.general_tab.mediapipe_selector_button.clicked.connect(lambda selected: self.change_signals_tab(selected))
         self.keyboard_tab = KeyboardTab(self.demo)
         self.mouse_tab = MouseTab(self.demo)
-        self.mouse_tab.set_signal_selector(list(self.selected_signals.signal_settings.keys()))
 
         self.central_widget.addTab(self.general_tab, "General")
         self.central_widget.addTab(self.keyboard_tab, "Keyboard")
@@ -281,6 +324,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.setInterval(50)
         self.timer.timeout.connect(self.update_plots)
         self.timer.start()
+
+
+        self.change_signals_tab(False)
 
         ## Signals
         self.demo.start()
@@ -297,6 +343,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.signals_tab.setCurrentIndex(0)
             self.selected_signals = self.signal_tab_iphone
         self.mouse_tab.set_signal_selector(list(self.selected_signals.signal_settings.keys()))
+        self.keyboard_tab.set_signals(list(self.selected_signals.signal_settings.keys()))
 
 
 def test_gui():

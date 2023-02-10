@@ -44,7 +44,7 @@ class Demo(Thread):
 
         self.use_mediapipe = False
         self.filter_landmarks = False
-        self.landmark_kalman = [Kalman1D(R=0.003 ** 2) for _ in range(468)]
+        self.landmark_kalman = [Kalman1D(R=0.004 ** 2) for _ in range(468)]
 
 
         # add hotkey
