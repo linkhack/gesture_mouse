@@ -424,7 +424,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setCentralWidget(self.central_widget)
 
-        self.timer = QtCore.QTimer()
+        self.timer = QtCore.QTimer(self)
         self.timer.setInterval(50)
         self.timer.timeout.connect(self.update_plots)
         self.timer.start()
