@@ -244,9 +244,9 @@ class KeyboardActionWidget(QtWidgets.QWidget):
     remove_clicked = QtCore.Signal()
     action_updated = QtCore.Signal()
 
-    def __init__(self, name):
+    def __init__(self, name: uuid.UUID):
         super().__init__()
-        self.name = name
+        self.name:uuid.UUID = name
         self.layout = QtWidgets.QHBoxLayout(self)
         self.threshold = QtWidgets.QDoubleSpinBox(self)
         self.threshold.setMinimum(0.)
@@ -296,7 +296,7 @@ class KeyboardTab(QtWidgets.QWidget):
         self.save_actions_button = QtWidgets.QPushButton("Save profile")
         self.save_actions_button.clicked.connect(self.save_action)
         self.load_actions_button = QtWidgets.QPushButton("Load profile")
-
+        self.load_actions_button.clicked.connect(self.load_profile)
         self.layout.addStretch()
 
         button_layout.addStretch()
@@ -310,7 +310,7 @@ class KeyboardTab(QtWidgets.QWidget):
     def add_action(self):
         name = uuid.uuid4()
         action_widget = KeyboardActionWidget(name=name)
-        self.layout.insertWidget(self.layout.count() - 1, action_widget)
+        self.layout.insertWidget(self.layout.count() - 2, action_widget)
         self.actions[name] = action_widget
         action_widget.remove_clicked.connect(self.remove_action)
         action_widget.action_updated.connect(self.update_action)
@@ -327,6 +327,12 @@ class KeyboardTab(QtWidgets.QWidget):
         print(action_widget)
         self.actions.pop(action_widget.name, None)
         self.layout.removeWidget(action_widget)
+        # Get signal
+        signal = self.demo.signals.get(action_widget.signal_selector.currentText(), None)
+        if signal is not None:
+            # delete old signal
+            signal.remove_action(action_widget.name)
+
         action_widget.close()
 
     def update_action(self):
@@ -396,6 +402,42 @@ class KeyboardTab(QtWidgets.QWidget):
         with open(file_name, "w") as f:
             json.dump(serial_actions, f, indent=2)
 
+    def load_profile(self):
+        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config/profiles", "JSON (*.json)")
+        for action in self.actions.values():
+            signal_name = action.signal_selector.currentText()
+            signal = self.demo.signals.get(signal_name,None)
+            if signal is not None:
+                signal.remove_action(action.name)
+            self.layout.removeWidget(action)
+            action.close()
+        self.actions.clear()
+        with open(file_name, "r") as f:
+            json_profile = json.load(f)
+            for action in json_profile:
+                action_mapping = action["action"]
+                if action_mapping != "keyboard_key":
+                    continue
+                signal = action["signal"]
+                threshold = float(action["threshold"])
+                trigger = action["trigger"]
+                action_type = action["action_type"]
+                key = action["key"]
+
+                # add widget
+                name = uuid.uuid4()
+                action_widget = KeyboardActionWidget(name=name)
+                action_widget.set_signal_selector(self.signals)
+                action_widget.signal_selector.setCurrentText(signal)
+                action_widget.threshold.setValue(threshold)
+                action_widget.action_trigger_selector.setCurrentText(trigger)
+                action_widget.action_type_selector.setCurrentText(action_type)
+                action_widget.key_input.setKeySequence(key)
+                action_widget.action_updated.emit()  # create associated action
+                self.actions[action_widget.name] = action_widget
+                self.layout.insertWidget(self.layout.count() - 2, action_widget)
+                action_widget.remove_clicked.connect(self.remove_action)
+                action_widget.action_updated.connect(self.update_action)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
