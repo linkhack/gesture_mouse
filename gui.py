@@ -1,17 +1,17 @@
-import sys
-from typing import List
+import json
+import time
+import uuid
+from typing import List, Dict
 
 import mouse
-from PySide6 import QtWidgets, QtCore, QtGui
-from gui_widgets import LogarithmicSlider
-import pyqtgraph as pg
-import time
+import keyboard
 import pygame
-import json
+import pyqtgraph as pg
+from PySide6 import QtWidgets, QtCore
 
 import Demo
-import SignalsCalculator
 import Signal
+from gui_widgets import LogarithmicSlider
 
 
 class PlotLine:
@@ -241,25 +241,38 @@ class MouseClickSettings(QtWidgets.QWidget):
 
 
 class KeyboardActionWidget(QtWidgets.QWidget):
-    def __init__(self):
+    remove_clicked = QtCore.Signal()
+    action_updated = QtCore.Signal()
+
+    def __init__(self, name):
         super().__init__()
+        self.name = name
         self.layout = QtWidgets.QHBoxLayout(self)
         self.threshold = QtWidgets.QDoubleSpinBox(self)
         self.threshold.setMinimum(0.)
         self.threshold.setMaximum(1.)
         self.threshold.setSingleStep(0.01)
+        self.threshold.setValue(0.5)
+        self.threshold.valueChanged.connect(self._emit_updated)
         self.signal_selector = QtWidgets.QComboBox()
+        self.signal_selector.currentTextChanged.connect(self._emit_updated)
         self.action_trigger_selector = QtWidgets.QComboBox()
         self.action_trigger_selector.addItems(["-", "up", "down", "hold"])
+        self.action_trigger_selector.currentTextChanged.connect(self._emit_updated)
         self.action_type_selector = QtWidgets.QComboBox()
         self.action_type_selector.addItems(["-", "press", "release", "hold"])
+        self.action_type_selector.currentTextChanged.connect(self._emit_updated)
         self.key_input = QtWidgets.QKeySequenceEdit()
         self.key_input.setClearButtonEnabled(True)
+        self.key_input.editingFinished.connect(self._emit_updated)
+        self.remove_button = QtWidgets.QPushButton("Remove")
+        self.remove_button.clicked.connect(self.remove_clicked.emit)
         self.layout.addWidget(self.signal_selector)
         self.layout.addWidget(self.threshold)
         self.layout.addWidget(self.action_trigger_selector)
         self.layout.addWidget(self.action_type_selector)
         self.layout.addWidget(self.key_input)
+        self.layout.addWidget(self.remove_button)
 
     def set_signal_selector(self, signals: List[str]):
         self.signal_selector.clear()
@@ -267,30 +280,90 @@ class KeyboardActionWidget(QtWidgets.QWidget):
         self.signal_selector.addItems(signals)
         self.signal_selector.adjustSize()
 
+    def _emit_updated(self):
+        self.action_updated.emit()
+
 
 class KeyboardTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
+        self.demo: Demo.Demo = demo
         self.add_action_button = QtWidgets.QPushButton("Add Action")
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.add_action_button, alignment=QtCore.Qt.AlignmentFlag.AlignTop)
         self.add_action_button.clicked.connect(self.add_action)
+        button_layout = QtWidgets.QHBoxLayout()
+        self.save_actions_button = QtWidgets.QPushButton("Save profile")
+        self.load_actions_button = QtWidgets.QPushButton("Load profile")
+
         self.layout.addStretch()
-        self.actions: List[KeyboardActionWidget] = []
+
+        button_layout.addWidget(self.save_actions_button)
+        self.actions: Dict[uuid.UUID, KeyboardActionWidget] = {}
         self.signals: List[str] = []
 
     def add_action(self):
-        action_widget = KeyboardActionWidget()
+        name = uuid.uuid4()
+        action_widget = KeyboardActionWidget(name=name)
         self.layout.insertWidget(self.layout.count() - 1, action_widget)
-        self.actions.append(action_widget)
+        self.actions[name] = action_widget
+        action_widget.remove_clicked.connect(self.remove_action)
+        action_widget.action_updated.connect(self.update_action)
         action_widget.set_signal_selector(self.signals)
 
     def set_signals(self, signals: List[str]):
         # Todo: remove actions, then load saved, then set combo-boxes
         self.signals = signals
-        for action in self.actions:
+        for action in self.actions.values():
             action.set_signal_selector(signals)
 
+    def remove_action(self):
+        action_widget = self.sender()
+        print(action_widget)
+        self.actions.pop(action_widget.name, None)
+        self.layout.removeWidget(action_widget)
+        action_widget.close()
+
+    def update_action(self):
+        action_widget: KeyboardActionWidget = self.sender()
+        uid = action_widget.name
+        signal = action_widget.signal_selector.currentText()
+        trigger = action_widget.action_trigger_selector.currentText()
+        action_type = action_widget.action_type_selector.currentText()
+        key_sequence = action_widget.key_input.keySequence()
+        threshold = action_widget.threshold.value()
+        print(f"{uid} / {signal} / {trigger} / {action_type} / {key_sequence.toString()} / {threshold}")
+        # Get signal
+        signal = self.demo.signals.get(signal, None)
+        if signal is None:
+            return  # No signal with this name, i.e no selected
+
+        # delete old signal
+        action = signal.actions.pop(uid, None)
+
+        # create new action
+        new_action = Signal.Action()
+        new_action.threshold = threshold
+        action_function = None
+        if action_type == "press":
+            def action_function(): keyboard.send(key_sequence.toString())
+        elif action_type == "release":
+            def action_function(): keyboard.release(key_sequence.toString())
+        elif action_type == "hold":
+            def action_function(): keyboard.press(key_sequence.toString())
+        else:
+            return
+
+        if trigger == "up":
+            new_action.set_up_action(action_function)
+        elif trigger == "down":
+            new_action.set_down_action(action_function)
+        elif trigger == "hold":
+            new_action.set_hold_action(action_function)
+        else:
+            return
+
+        signal.add_action(uid, new_action)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -324,7 +397,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.setInterval(50)
         self.timer.timeout.connect(self.update_plots)
         self.timer.start()
-
 
         self.change_signals_tab(False)
 

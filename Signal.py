@@ -2,7 +2,8 @@ import pickle
 
 from SignalsCalculator import FilteredFloat
 import keyboard
-from typing import Callable
+from typing import Callable, Dict
+import uuid
 import mouse
 
 
@@ -70,7 +71,7 @@ class Signal:
         self.name = name
         self.raw_value: FilteredFloat = FilteredFloat(0, 0.0001)
         self.scaled_value: float = 0.
-        self.action: Action = Action()  # TODO: maybe list (multiple actions triggered with one event) and API
+        self.actions: Dict[uuid.UUID, Action] = {}
         self.lower_threshold: float = 0.
         self.higher_threshold: float = 1.
 
@@ -85,8 +86,8 @@ class Signal:
         filtered_value = self.raw_value.get()
         self.scaled_value = max(
             min((filtered_value - self.lower_threshold) / (self.higher_threshold - self.lower_threshold), 1.), 0.)
-        if self.action is not None:
-            self.action.update(self.scaled_value)
+        for action in self.actions.values():
+            action.update(self.scaled_value)
 
     def set_threshold(self, lower_threshold: float, higher_threshold: float):
         """
@@ -126,3 +127,19 @@ class Signal:
         print(self.name, filter_value)
         self.raw_value.set_filter_value(filter_value)
 
+    def add_action(self, uid: uuid.UUID, action: Action):
+        """
+        Adds action to a signal
+        :param uid: uuid of action
+        :param action: action
+        :return:
+        """
+        self.actions[uid] = action
+
+    def remove_action(self, uid):
+        """
+        Removes action with uuid uid
+        :param uid: uuid of action to remove
+        :return:
+        """
+        self.actions.pop(uid, None)

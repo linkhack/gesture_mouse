@@ -3,6 +3,7 @@ import time
 from threading import Thread
 import socket
 import json
+from typing import Dict
 
 import keyboard
 import mediapipe as mp
@@ -54,8 +55,7 @@ class Demo(Thread):
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
         self.transformed_signals = SignalsCalculator.SignalsResult()
-        self.signals = dict()
-
+        self.signals: Dict[str, Signal] = {}
     def run(self):
         self.is_running = True
         while self.is_running:
