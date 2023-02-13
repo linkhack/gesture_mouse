@@ -47,15 +47,15 @@ class Demo(Thread):
         self.filter_landmarks = False
         self.landmark_kalman = [Kalman1D(R=0.004 ** 2) for _ in range(468)]
 
-
         # add hotkey
-        keyboard.add_hotkey("esc", lambda: self.stop())
+        # keyboard.add_hotkey("esc", lambda: self.stop())
         keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())
         keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
         self.transformed_signals = SignalsCalculator.SignalsResult()
         self.signals: Dict[str, Signal] = {}
+
     def run(self):
         self.is_running = True
         while self.is_running:
@@ -87,7 +87,8 @@ class Demo(Thread):
                      landmarks.landmark])
                 if self.filter_landmarks:
                     for i in range(468):
-                        kalman_filters_landm_complex = self.landmark_kalman[i].update(np_landmarks[i, 0] + 1j * np_landmarks[i, 1])
+                        kalman_filters_landm_complex = self.landmark_kalman[i].update(
+                            np_landmarks[i, 0] + 1j * np_landmarks[i, 1])
                         np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
                             kalman_filters_landm_complex)
 
@@ -164,7 +165,6 @@ class Demo(Thread):
 
     def stop(self):
         self.is_running = False
-        self.cam_cap.release()
 
     def disable_gesture_mouse(self):
         # Disables gesture mouse and enables normal mouse input

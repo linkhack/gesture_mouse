@@ -7,7 +7,7 @@ import mouse
 import keyboard
 import pygame
 import pyqtgraph as pg
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtGui
 
 import Demo
 import Signal
@@ -294,11 +294,16 @@ class KeyboardTab(QtWidgets.QWidget):
         self.add_action_button.clicked.connect(self.add_action)
         button_layout = QtWidgets.QHBoxLayout()
         self.save_actions_button = QtWidgets.QPushButton("Save profile")
+        self.save_actions_button.clicked.connect(self.save_action)
         self.load_actions_button = QtWidgets.QPushButton("Load profile")
 
         self.layout.addStretch()
 
+        button_layout.addStretch()
+        button_layout.addWidget(self.load_actions_button)
         button_layout.addWidget(self.save_actions_button)
+
+        self.layout.addLayout(button_layout)
         self.actions: Dict[uuid.UUID, KeyboardActionWidget] = {}
         self.signals: List[str] = []
 
@@ -346,11 +351,14 @@ class KeyboardTab(QtWidgets.QWidget):
         new_action.threshold = threshold
         action_function = None
         if action_type == "press":
-            def action_function(): keyboard.send(key_sequence.toString())
+            def action_function():
+                keyboard.send(key_sequence.toString())
         elif action_type == "release":
-            def action_function(): keyboard.release(key_sequence.toString())
+            def action_function():
+                keyboard.release(key_sequence.toString())
         elif action_type == "hold":
-            def action_function(): keyboard.press(key_sequence.toString())
+            def action_function():
+                keyboard.press(key_sequence.toString())
         else:
             return
 
@@ -364,6 +372,29 @@ class KeyboardTab(QtWidgets.QWidget):
             return
 
         signal.add_action(uid, new_action)
+
+    def save_action(self, filename):
+        file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Select profile save file", "./config/profiles",
+                                                             "JSON (*.json)")
+        print(file_name)
+        serial_actions = []
+        for action in self.actions.values():
+            threshold = action.threshold.value()
+            trigger = action.action_trigger_selector.currentText()
+            signal = action.signal_selector.currentText()
+            action_type = action.action_type_selector.currentText()
+            key = action.key_input.keySequence().toString()
+            serial_action = {
+                "action": f"keyboard_key",
+                "signal": signal,
+                "threshold": threshold,
+                "trigger": trigger,
+                "action_type": action_type,
+                "key": key
+            }
+            serial_actions.append(serial_action)
+        with open(file_name, "w") as f:
+            json.dump(serial_actions, f, indent=2)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -417,6 +448,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mouse_tab.set_signal_selector(list(self.selected_signals.signal_settings.keys()))
         self.keyboard_tab.set_signals(list(self.selected_signals.signal_settings.keys()))
 
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        self.demo.stop()
+        self.demo.join()
+        event.accept()
+
+
 
 def test_gui():
     pygame.init()
@@ -425,7 +462,7 @@ def test_gui():
     window.resize(1280, 720)
     window.show()
     app.exec()
-
+    print("hallo")
 
 if __name__ == '__main__':
     test_gui()
