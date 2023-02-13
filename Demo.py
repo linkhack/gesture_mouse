@@ -9,6 +9,7 @@ import keyboard
 import mediapipe as mp
 import cv2
 import numpy as np
+from PySide6.QtCore import QThread
 
 import Mouse
 import DrawingDebug
@@ -23,7 +24,7 @@ mp_face_mesh = mp.solutions.face_mesh
 mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
 
-class Demo(Thread):
+class Demo(QThread):
     def __init__(self):
         super().__init__()
         self.is_running = False
@@ -165,6 +166,7 @@ class Demo(Thread):
 
     def stop(self):
         self.is_running = False
+
 
     def disable_gesture_mouse(self):
         # Disables gesture mouse and enables normal mouse input
