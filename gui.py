@@ -246,7 +246,9 @@ class KeyboardActionWidget(QtWidgets.QWidget):
 
     def __init__(self, name: uuid.UUID):
         super().__init__()
-        self.name:uuid.UUID = name
+        self.name: uuid.UUID = name
+        self.current_signal: str = ""
+
         self.layout = QtWidgets.QHBoxLayout(self)
         self.threshold = QtWidgets.QDoubleSpinBox(self)
         self.threshold.setMinimum(0.)
@@ -299,6 +301,7 @@ class KeyboardTab(QtWidgets.QWidget):
         self.load_actions_button.clicked.connect(self.load_profile)
         self.layout.addStretch()
 
+
         button_layout.addStretch()
         button_layout.addWidget(self.load_actions_button)
         button_layout.addWidget(self.save_actions_button)
@@ -328,7 +331,7 @@ class KeyboardTab(QtWidgets.QWidget):
         self.actions.pop(action_widget.name, None)
         self.layout.removeWidget(action_widget)
         # Get signal
-        signal = self.demo.signals.get(action_widget.signal_selector.currentText(), None)
+        signal = self.demo.signals.get(action_widget.current_signal, None)
         if signal is not None:
             # delete old signal
             signal.remove_action(action_widget.name)
@@ -338,19 +341,24 @@ class KeyboardTab(QtWidgets.QWidget):
     def update_action(self):
         action_widget: KeyboardActionWidget = self.sender()
         uid = action_widget.name
-        signal = action_widget.signal_selector.currentText()
+        new_signal = action_widget.signal_selector.currentText()
         trigger = action_widget.action_trigger_selector.currentText()
         action_type = action_widget.action_type_selector.currentText()
         key_sequence = action_widget.key_input.keySequence()
+        key_sequence_string = key_sequence.toString().lower()
         threshold = action_widget.threshold.value()
-        print(f"{uid} / {signal} / {trigger} / {action_type} / {key_sequence.toString()} / {threshold}")
-        # Get signal
-        signal = self.demo.signals.get(signal, None)
-        if signal is None:
-            return  # No signal with this name, i.e no selected
+        print(f"{uid} / {new_signal} / {trigger} / {action_type} / {key_sequence_string} / {threshold}")
 
         # delete old signal
-        action = signal.actions.pop(uid, None)
+        signal = self.demo.signals.get(action_widget.current_signal, None)
+        if signal is not None:
+            # delete old signal
+            signal.remove_action(action_widget.name)
+        action_widget.current_signal = new_signal
+        # Get new signal
+        signal = self.demo.signals.get(new_signal, None)
+        if signal is None:
+            return  # No signal with this name, i.e no selected
 
         # create new action
         new_action = Signal.Action()
@@ -358,13 +366,14 @@ class KeyboardTab(QtWidgets.QWidget):
         action_function = None
         if action_type == "press":
             def action_function():
-                keyboard.send(key_sequence.toString())
+                keyboard.send(key_sequence_string)
         elif action_type == "release":
             def action_function():
-                keyboard.release(key_sequence.toString())
+                keyboard.release(key_sequence_string)
         elif action_type == "hold":
             def action_function():
-                keyboard.press(key_sequence.toString())
+                print("holding key "+key_sequence_string)
+                keyboard.press(key_sequence_string)
         else:
             return
 
@@ -405,8 +414,8 @@ class KeyboardTab(QtWidgets.QWidget):
     def load_profile(self):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config/profiles", "JSON (*.json)")
         for action in self.actions.values():
-            signal_name = action.signal_selector.currentText()
-            signal = self.demo.signals.get(signal_name,None)
+            signal_name = action.current_signal
+            signal = self.demo.signals.get(signal_name, None)
             if signal is not None:
                 signal.remove_action(action.name)
             self.layout.removeWidget(action)
@@ -433,11 +442,11 @@ class KeyboardTab(QtWidgets.QWidget):
                 action_widget.action_trigger_selector.setCurrentText(trigger)
                 action_widget.action_type_selector.setCurrentText(action_type)
                 action_widget.key_input.setKeySequence(key)
-                action_widget.action_updated.emit()  # create associated action
                 self.actions[action_widget.name] = action_widget
                 self.layout.insertWidget(self.layout.count() - 2, action_widget)
                 action_widget.remove_clicked.connect(self.remove_action)
                 action_widget.action_updated.connect(self.update_action)
+                action_widget.action_updated.emit()  # create associated action
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
