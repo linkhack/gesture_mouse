@@ -20,7 +20,7 @@ class FilteredFloat:
         else:
             self.use_filter = True
             self.filter_R = filter_value
-        self.filter = KalmanFilter1D.Kalman1D(R=self.filter_R**2)
+        self.filter = KalmanFilter1D.Kalman1D(R=self.filter_R ** 2)
         self.value = value
 
     def set(self, value):
@@ -57,7 +57,7 @@ class Filtered2D:
 
     def set(self, value):
         if self.use_filter:
-            kalman = self.filter.update(value[0]+1j*value[1])
+            kalman = self.filter.update(value[0] + 1j * value[1])
             self.value[0], self.value[1] = (np.real(kalman), np.imag(kalman))
         else:
             self.value = value
@@ -112,19 +112,19 @@ class SignalsCalculater:
         self.monitor = monitor.monitor()
 
     def process(self, landmarks):
-        rvec, tvec = self.head_pose(landmarks[:, :2])
+        rvec, tvec = self.geometric_head_pose(landmarks)
 
         r = Rotation.from_rotvec(np.squeeze(rvec))
 
         rotationmat = r.as_matrix()
         angles = r.as_euler("xyz", degrees=True)
-        #normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
-        self.result.rvec = rvec # TODO: result not needed anymore
+        # normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
+        self.result.rvec = rvec  # TODO: result not needed anymore
         self.result.tvec = tvec
         self.result.yaw.set(angles[1])
         self.result.pitch.set(angles[0])
         self.result.roll.set(angles[2])
-        self.result.nosetip = rotationmat@self.head_pose_calculator.canonical_metric_landmarks[1, :]+tvec.squeeze()
+        self.result.nosetip = rotationmat @ self.head_pose_calculator.canonical_metric_landmarks[1, :] + tvec.squeeze()
         jaw_open = self.get_jaw_open(landmarks)
         self.result.jaw_open.set(jaw_open)
         mouth_puck = self.get_mouth_puck(landmarks)
@@ -151,26 +151,46 @@ class SignalsCalculater:
         rvec, tvec = self.head_pose_calculator.fit_func(landmarks, self.camera_parameters)
         return rvec, tvec
 
+    def geometric_head_pose(self, landmarks):
+        nose = [8, 9, 10, 151]
+        eyes = [33, 133, 362, 263]
+        nose_points = landmarks[nose, :]
+        eye_points = landmarks[eyes, :]
+        nose_mean = np.mean(nose_points, 0)
+        eye_mean = np.mean(eye_points, 0)
+        nose_centered = nose_points - nose_mean
+        eye_centered = eye_points - eye_mean
+        uu_nose, dd_nose, vv_nose = np.linalg.svd(nose_centered)
+        up = vv_nose[0]
+        uu_eye, dd_eye, vv_eye = np.linalg.svd(eye_centered)
+        left = vv_eye[0]
+        left = left - np.dot(left, up) * up
+        left = left / np.linalg.norm(left)
+        front = np.cross(up, left)
+        R = [up, left, front]
+        r = Rotation.from_matrix(R)
+        return r.as_rotvec(), np.zeros((3, 1))
+
     def get_screen_intersection(self):
         rotation_matrix, _ = cv2.Rodrigues(self.result.rvec)
         forward = np.matmul(rotation_matrix, np.array([0., 0., -1.]))
-        screen_point = self.result.nosetip - self.result.nosetip[2]/forward[2] * forward
-        x_pixel, y_pixel = self.monitor.camera_to_monitor(10*screen_point[0], 10*screen_point[1])
+        screen_point = self.result.nosetip - self.result.nosetip[2] / forward[2] * forward
+        x_pixel, y_pixel = self.monitor.camera_to_monitor(10 * screen_point[0], 10 * screen_point[1])
         return x_pixel, y_pixel
 
     def get_jaw_open(self, landmarks):
-        mouth_distance = np.linalg.norm(landmarks[14, :]-landmarks[13, :])
+        mouth_distance = np.linalg.norm(landmarks[14, :] - landmarks[13, :])
         nose_tip = landmarks[1, :]
         chin_moving_landmark = landmarks[18, :]
-        head_height = np.linalg.norm(landmarks[10, :]-landmarks[151, :])
-        jaw_nose_distance = np.linalg.norm(nose_tip-chin_moving_landmark)
-        normalized_distance = jaw_nose_distance/head_height
+        head_height = np.linalg.norm(landmarks[10, :] - landmarks[151, :])
+        jaw_nose_distance = np.linalg.norm(nose_tip - chin_moving_landmark)
+        normalized_distance = jaw_nose_distance / head_height
         return normalized_distance
 
     def get_mouth_puck(self, landmarks):
-        left_distance = np.linalg.norm(landmarks[302]-landmarks[72])
+        left_distance = np.linalg.norm(landmarks[302] - landmarks[72])
         d = np.linalg.norm(landmarks[151, :] - landmarks[10, :])
-        normalized_distance = left_distance/d
+        normalized_distance = left_distance / d
         return normalized_distance
 
     def set_filter_value(self, field_name: str, filter_value: float):

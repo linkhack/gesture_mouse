@@ -76,6 +76,7 @@ class Demo(QThread):
             while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
                 success, image = self.cam_cap.read()
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                image.flags.writeable = False
                 results = face_mesh.process(image)
                 image.flags.writeable = True
                 image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
@@ -84,7 +85,7 @@ class Demo(QThread):
                     continue
                 landmarks = results.multi_face_landmarks[0]
                 np_landmarks = np.array(
-                    [(lm.x * self.frame_width, lm.y * self.frame_height, lm.z * self.frame_width) for lm in
+                    [(lm.x, lm.y, lm.z) for lm in
                      landmarks.landmark])
                 if self.filter_landmarks:
                     for i in range(468):
