@@ -116,7 +116,7 @@ class SignalsCalculater:
         self.frame_size = frame_size
 
     def process(self, landmarks):
-        rvec, tvec = self.procrustes_head_pose(landmarks)
+        rvec, tvec = self.pnp_head_pose(landmarks)
 
         r = Rotation.from_rotvec(np.squeeze(rvec))
 
@@ -152,7 +152,7 @@ class SignalsCalculater:
     def process_neutral(self, landmarks):
         pass
 
-    def head_pose(self, landmarks):
+    def pnp_head_pose(self, landmarks):
         screen_landmarks = landmarks[:, :2] * np.array(self.frame_size)
         rvec, tvec = self.head_pose_calculator.fit_func(screen_landmarks, self.camera_parameters)
         return rvec, tvec
