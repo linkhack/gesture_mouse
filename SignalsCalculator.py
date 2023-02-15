@@ -117,7 +117,7 @@ class SignalsCalculater:
 
     def process(self, landmarks):
         rvec, tvec = self.pnp_head_pose(landmarks)
-
+        landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1], self.frame_size[0]))
         r = Rotation.from_rotvec(np.squeeze(rvec))
 
         rotationmat = r.as_matrix()
