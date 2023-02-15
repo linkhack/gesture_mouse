@@ -167,16 +167,19 @@ class GeneralTab(QtWidgets.QWidget):
 class MouseTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
-        self.demo = demo
+        self.demo: Demo.Demo = demo
         layout = QtWidgets.QVBoxLayout(self)
         self.left_click_settings = MouseClickSettings("Left Click")
         self.left_click_signal = "-"
+        self.left_click_uid = uuid.uuid4()
         self.left_click_settings.signal_selector.currentTextChanged.connect(self.set_left_click)
         self.right_click_settings = MouseClickSettings("Right Click")
         self.right_click_signal = "-"
+        self.right_click_uid = uuid.uuid4()
         self.right_click_settings.signal_selector.currentTextChanged.connect(self.set_right_click)
         self.double_click_settings = MouseClickSettings("Double Click")
         self.double_click_signal = "-"
+        self.double_click_uid = uuid.uuid4()
         self.double_click_settings.signal_selector.currentTextChanged.connect(self.set_double_click)
         layout.addWidget(self.left_click_settings)
         layout.addWidget(self.right_click_settings)
@@ -197,37 +200,37 @@ class MouseTab(QtWidgets.QWidget):
         if selected_text == "":
             return
         if self.left_click_signal != "-":
-            self.demo.signals[self.left_click_signal].action = None  # TODO action list instead of single action?
+            self.demo.signals[self.left_click_signal].remove_action(self.left_click_uid)
         self.left_click_signal = selected_text
         if selected_text == "-":
             return
         action = Signal.Action()
         action.up_action = lambda: self.demo.mouse.click(mouse.LEFT)
-        self.demo.signals[selected_text].action = action
+        self.demo.signals[selected_text].add_action(self.left_click_uid, action)
 
     def set_right_click(self, selected_text: str):
         if selected_text == "":
             return
         if self.right_click_signal != "-":
-            self.demo.signals[self.right_click_signal].action = None  # TODO action list instead of single action?
+            self.demo.signals[self.right_click_signal].remove_action(self.right_click_uid)
         self.right_click_signal = selected_text
         if selected_text == "-":
             return
         action = Signal.Action()
         action.up_action = lambda: self.demo.mouse.click(mouse.RIGHT)
-        self.demo.signals[selected_text].action = action
+        self.demo.signals[selected_text].add_action(self.double_click_uid, action)
 
     def set_double_click(self, selected_text: str):
         if selected_text == "":
             return
         if self.double_click_signal != "-":
-            self.demo.signals[self.double_click_signal].action = None  # TODO action list instead of single action?
-        self.right_click_signal = selected_text
+            self.demo.signals[self.double_click_signal].remove_action(self.double_click_uid)
+        self.double_click_signal = selected_text
         if selected_text == "-":
             return
         action = Signal.Action()
         action.up_action = lambda: self.demo.mouse.double_click(mouse.LEFT)
-        self.demo.signals[selected_text].action = action
+        self.demo.signals[selected_text].add_action(self.double_click_uid, action)
 
 
 class MouseClickSettings(QtWidgets.QWidget):
@@ -366,14 +369,15 @@ class KeyboardTab(QtWidgets.QWidget):
         action_function = None
         if action_type == "press":
             def action_function():
-                keyboard.send(key_sequence_string)
+                keyboard.press(key_sequence_string)
+
         elif action_type == "release":
             def action_function():
                 keyboard.release(key_sequence_string)
         elif action_type == "hold":
             def action_function():
-                print("holding key "+key_sequence_string)
                 keyboard.press(key_sequence_string)
+                keyboard.call_later(lambda key=key_sequence_string: keyboard.release(key), delay=0.02)
         else:
             return
 

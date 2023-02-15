@@ -47,7 +47,7 @@ class Demo(QThread):
 
         self.use_mediapipe = False
         self.filter_landmarks = False
-        self.landmark_kalman = [Kalman1D(R=0.008 ** 2) for _ in range(468)]
+        self.landmark_kalman = [Kalman1D(R=0.006 ** 2) for _ in range(468)]
 
         # add hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())

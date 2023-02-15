@@ -128,7 +128,6 @@ class SignalsCalculater:
         self.result.yaw.set(angles[1])
         self.result.pitch.set(angles[0])
         self.result.roll.set(angles[2])
-        print(angles[0])
         self.result.nosetip = rotationmat @ self.head_pose_calculator.canonical_metric_landmarks[1, :] + tvec.squeeze()
         jaw_open = self.get_jaw_open(landmarks)
         self.result.jaw_open.set(jaw_open)
@@ -137,6 +136,9 @@ class SignalsCalculater:
         screen_xy = self.get_screen_intersection()
         screen_xy = np.array(screen_xy)
         self.result.screen_xy.set(screen_xy)
+        l_brow_outer_up = self.cross_ratio_colinear(landmarks, [225, 46, 70, 71])
+        r_brow_outer_up = self.cross_ratio_colinear(landmarks, [445, 276, 300, 301])
+        brow_inner_up = self.five_point_cross_ratio(landmarks, [9, 69, 299, 65, 295])
 
         signals = {
             "HeadPitch": angles[0],
@@ -144,7 +146,11 @@ class SignalsCalculater:
             "HeadRoll": angles[2],
             "JawOpen": jaw_open,
             "MouthPuck": mouth_puck,
-            "screen_xy": self.result.screen_xy.get()
+            "screen_xy": self.result.screen_xy.get(),
+            "BrowOuterUpLeft": l_brow_outer_up,
+            "BrowOuterUpRight": r_brow_outer_up,
+            "BrowInnerUp": brow_inner_up,
+            "BrowInnerDown": brow_inner_up
         }
 
         return signals
@@ -207,6 +213,45 @@ class SignalsCalculater:
         d = np.linalg.norm(landmarks[151, :] - landmarks[10, :])
         normalized_distance = left_distance / d
         return normalized_distance
+
+    def cross_ratio_colinear(self, landmarks, indices):
+        """
+        Calculates the cross ratio of 4 "almost" colinear points
+        :param landmarks: list of landmarks
+        :param indices: indices of 4 landmarks to use
+        :return: cross_ratio of the 4 points (is invariant under projective transformations
+        """
+        assert len(indices) == 4
+        p1, p2, p3, p4 = landmarks[indices, :2]
+        return (np.linalg.norm(p3 - p1) * np.linalg.norm(p4 - p2)) / (np.linalg.norm(p4 - p1) * np.linalg.norm(p3 - p2))
+
+    def five_point_cross_ratio(self, landmarks, indices):
+        """
+        Calculates the cross ratio of 5 colinear points
+        :param landmarks: list of landmarks
+        :param indices: indices of 5 landmarks to use
+        :return: cross_ratio of the 5 points (is invariant under projective transformations
+        """
+        assert len(indices) == 5
+        p1, p2, p3, p4, p5 = landmarks[indices, :2]
+        m124 = np.ones((3, 3))
+        m124[:2, 0] = p1
+        m124[:2, 1] = p2
+        m124[:2, 2] = p4
+        m135 = np.ones((3, 3))
+        m135[:2, 0] = p1
+        m135[:2, 1] = p3
+        m135[:2, 2] = p5
+        m125 = np.ones((3, 3))
+        m125[:2, 0] = p1
+        m125[:2, 1] = p2
+        m125[:2, 2] = p5
+        m134 = np.ones((3, 3))
+        m134[:2, 0] = p1
+        m134[:2, 1] = p3
+        m134[:2, 2] = p4
+
+        return (np.linalg.det(m124) * np.linalg.det(m135)) / (np.linalg.det(m125) * np.linalg.det(m134))
 
     def set_filter_value(self, field_name: str, filter_value: float):
         signal = getattr(self.result, field_name, None)
