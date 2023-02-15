@@ -9,7 +9,9 @@ import numpy as np
 import cv2
 
 from dataclasses import dataclass, fields
+from typing import Tuple
 from numbers import Number
+from face_geometry import PCF, get_metric_landmarks
 
 
 class FilteredFloat:
@@ -104,15 +106,17 @@ class SignalsResult:
 
 
 class SignalsCalculater:
-    def __init__(self, camera_parameters):
+    def __init__(self, camera_parameters, frame_size: Tuple[int, int]):
         self.result = SignalsResult()
         self.neutral_landmarks = np.zeros((478, 3))
         self.camera_parameters = camera_parameters
         self.head_pose_calculator = PnPHeadPose()
         self.monitor = monitor.monitor()
+        self.pcf = PCF(1, 10000, 720, 1280)
+        self.frame_size = frame_size
 
     def process(self, landmarks):
-        rvec, tvec = self.geometric_head_pose(landmarks)
+        rvec, tvec = self.procrustes_head_pose(landmarks)
 
         r = Rotation.from_rotvec(np.squeeze(rvec))
 
@@ -124,6 +128,7 @@ class SignalsCalculater:
         self.result.yaw.set(angles[1])
         self.result.pitch.set(angles[0])
         self.result.roll.set(angles[2])
+        print(angles[0])
         self.result.nosetip = rotationmat @ self.head_pose_calculator.canonical_metric_landmarks[1, :] + tvec.squeeze()
         jaw_open = self.get_jaw_open(landmarks)
         self.result.jaw_open.set(jaw_open)
@@ -148,7 +153,8 @@ class SignalsCalculater:
         pass
 
     def head_pose(self, landmarks):
-        rvec, tvec = self.head_pose_calculator.fit_func(landmarks, self.camera_parameters)
+        screen_landmarks = landmarks[:, :2] * np.array(self.frame_size)
+        rvec, tvec = self.head_pose_calculator.fit_func(screen_landmarks, self.camera_parameters)
         return rvec, tvec
 
     def geometric_head_pose(self, landmarks):
@@ -170,6 +176,15 @@ class SignalsCalculater:
         R = [up, left, front]
         r = Rotation.from_matrix(R)
         return r.as_rotvec(), np.zeros((3, 1))
+
+    def procrustes_head_pose(self, landmarks):
+        landmarks = landmarks.T
+        landmarks = landmarks[:, :468]
+        metric_lm, pose_matrix = get_metric_landmarks(landmarks, self.pcf)
+        rotatiom_matirx = pose_matrix[:3, :3]
+        translation = pose_matrix[3, :3]
+        rvec = Rotation.from_matrix(rotatiom_matirx)
+        return rvec.as_rotvec(), translation
 
     def get_screen_intersection(self):
         rotation_matrix, _ = cv2.Rodrigues(self.result.rvec)

@@ -41,12 +41,13 @@ class Demo(QThread):
         self.monitor = monitor.monitor()
 
         self.camera_parameters = (1000, 1000, 1280 / 2, 720 / 2)
-        self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters)
+        self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters,
+                                                                     frame_size=(self.frame_width, self.frame_height))
         self.signal_calculator.set_filter_value("screen_xy", 0.022)
 
         self.use_mediapipe = False
         self.filter_landmarks = False
-        self.landmark_kalman = [Kalman1D(R=0.004 ** 2) for _ in range(468)]
+        self.landmark_kalman = [Kalman1D(R=0.008 ** 2) for _ in range(468)]
 
         # add hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
@@ -167,7 +168,6 @@ class Demo(QThread):
 
     def stop(self):
         self.is_running = False
-
 
     def disable_gesture_mouse(self):
         # Disables gesture mouse and enables normal mouse input

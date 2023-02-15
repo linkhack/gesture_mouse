@@ -1,4 +1,5 @@
 # Many parts taken from the cpp implementation from github.com/google/mediapipe
+# This is copied from https://github.com/Rassibassi/mediapipeDemos
 #
 # Copyright 2020 The MediaPipe Authors.
 #
