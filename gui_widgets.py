@@ -68,4 +68,6 @@ class LogarithmicSlider(QSlider):
         return float(super(LogarithmicSlider, self).singleStep()) / self._multi
 
     def setValue(self, value):
-        super(LogarithmicSlider, self).setValue(int(value * self._multi))
+
+        print(int(value*self._multi))
+        super(LogarithmicSlider, self).setValue(int(math.log10(value) * self._multi))

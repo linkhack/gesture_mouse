@@ -135,6 +135,8 @@ class SignalTab(QtWidgets.QWidget):
             setting.higher_value.valueChanged.connect(
                 lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
 
+            setting.filter_slider.setValue(filter_value)
+
             self.setting_widget.layout().addWidget(setting)
             self.signal_settings[signal_name] = setting
 
