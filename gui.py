@@ -262,7 +262,7 @@ class KeyboardActionWidget(QtWidgets.QWidget):
         self.signal_selector = QtWidgets.QComboBox()
         self.signal_selector.currentTextChanged.connect(self._emit_updated)
         self.action_trigger_selector = QtWidgets.QComboBox()
-        self.action_trigger_selector.addItems(["-", "up", "down", "hold"])
+        self.action_trigger_selector.addItems(["-", "up", "down", "hold high", "hold low"])
         self.action_trigger_selector.currentTextChanged.connect(self._emit_updated)
         self.action_type_selector = QtWidgets.QComboBox()
         self.action_type_selector.addItems(["-", "press", "release", "hold"])
@@ -362,6 +362,8 @@ class KeyboardTab(QtWidgets.QWidget):
         signal = self.demo.signals.get(new_signal, None)
         if signal is None:
             return  # No signal with this name, i.e no selected
+        if key_sequence_string == "":
+            return
 
         # create new action
         new_action = Signal.Action()
@@ -385,8 +387,10 @@ class KeyboardTab(QtWidgets.QWidget):
             new_action.set_up_action(action_function)
         elif trigger == "down":
             new_action.set_down_action(action_function)
-        elif trigger == "hold":
-            new_action.set_hold_action(action_function)
+        elif trigger == "hold high":
+            new_action.set_high_hold_action(action_function)
+        elif trigger == "hold low":
+            new_action.set_low_hold_action(action_function)
         else:
             return
 

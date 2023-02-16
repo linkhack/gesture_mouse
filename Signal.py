@@ -16,7 +16,8 @@ class Action:
         self.old_value: float = 0.
         self.up_action: Callable[[], None] = null_f
         self.down_action: Callable[[], None] = null_f
-        self.hold_action: Callable[[], None] = null_f
+        self.high_hold_action: Callable[[], None] = null_f
+        self.low_hold_action: Callable[[], None] = null_f
         self.threshold: float = 0.5
 
     def update(self, value: float):
@@ -24,7 +25,8 @@ class Action:
         Updates the value and triggers functions according to the value of threshold and old value.
         down action if value <= threshold < old_value
         up action if value > threshold >= old_value
-        hold_action if value > threshold and old_value > threshold
+        high_hold_action if value > threshold and old_value > threshold
+        low_hold_action if value <= threshold and old_value <= threshold
         sets old_value to value
         :param value: new signal value for this action
         """
@@ -33,7 +35,9 @@ class Action:
         elif value > self.threshold >= self.old_value:
             self.up_action()
         elif value > self.threshold and self.old_value >= self.threshold:
-            self.hold_action()
+            self.high_hold_action()
+        elif value <= self.threshold and self.old_value <= self.threshold:
+            self.low_hold_action()
 
         self.old_value = value
 
@@ -51,12 +55,19 @@ class Action:
         """
         self.down_action = action
 
-    def set_hold_action(self, action: Callable[[], None]):
+    def set_high_hold_action(self, action: Callable[[], None]):
         """
         Sets the action for staying above the threshold, i.e. value > threshold and old_value > threshold
         :param action:
         """
-        self.hold_action = action
+        self.high_hold_action = action
+
+    def set_low_hold_action(self, action: Callable[[], None]):
+        """
+        Sets the action for staying below the threshold, i.e. value > threshold and old_value > threshold
+        :param action:
+        """
+        self.low_hold_action = action
 
     def set_threshold(self, value: float):
         """
