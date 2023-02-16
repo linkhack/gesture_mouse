@@ -265,7 +265,7 @@ class KeyboardActionWidget(QtWidgets.QWidget):
         self.action_trigger_selector.addItems(["-", "up", "down", "hold high", "hold low"])
         self.action_trigger_selector.currentTextChanged.connect(self._emit_updated)
         self.action_type_selector = QtWidgets.QComboBox()
-        self.action_type_selector.addItems(["-", "press", "release", "hold"])
+        self.action_type_selector.addItems(["-", "press", "release", "hold", "press and release"])
         self.action_type_selector.currentTextChanged.connect(self._emit_updated)
         self.key_input = QtWidgets.QKeySequenceEdit()
         self.key_input.setClearButtonEnabled(True)
@@ -303,7 +303,6 @@ class KeyboardTab(QtWidgets.QWidget):
         self.load_actions_button = QtWidgets.QPushButton("Load profile")
         self.load_actions_button.clicked.connect(self.load_profile)
         self.layout.addStretch()
-
 
         button_layout.addStretch()
         button_layout.addWidget(self.load_actions_button)
@@ -380,6 +379,9 @@ class KeyboardTab(QtWidgets.QWidget):
             def action_function():
                 keyboard.press(key_sequence_string)
                 keyboard.call_later(lambda key=key_sequence_string: keyboard.release(key), delay=0.02)
+        elif action_type == "press and release":
+            def action_function():
+                keyboard.send(key_sequence_string)
         else:
             return
 
@@ -420,7 +422,8 @@ class KeyboardTab(QtWidgets.QWidget):
             json.dump(serial_actions, f, indent=2)
 
     def load_profile(self):
-        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config/profiles", "JSON (*.json)")
+        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config/profiles",
+                                                             "JSON (*.json)")
         for action in self.actions.values():
             signal_name = action.current_signal
             signal = self.demo.signals.get(signal_name, None)
@@ -455,6 +458,7 @@ class KeyboardTab(QtWidgets.QWidget):
                 action_widget.remove_clicked.connect(self.remove_action)
                 action_widget.action_updated.connect(self.update_action)
                 action_widget.action_updated.emit()  # create associated action
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -513,7 +517,6 @@ class MainWindow(QtWidgets.QMainWindow):
         event.accept()
 
 
-
 def test_gui():
     pygame.init()
     app = QtWidgets.QApplication([])
@@ -522,6 +525,7 @@ def test_gui():
     window.show()
     app.exec()
     print("hallo")
+
 
 if __name__ == '__main__':
     test_gui()
