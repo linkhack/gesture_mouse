@@ -139,6 +139,7 @@ class SignalsCalculater:
         l_brow_outer_up = self.cross_ratio_colinear(landmarks, [225, 46, 70, 71])
         r_brow_outer_up = self.cross_ratio_colinear(landmarks, [445, 276, 300, 301])
         brow_inner_up = self.five_point_cross_ratio(landmarks, [9, 69, 299, 65, 295])
+        smile = self.cross_cross_ratio(landmarks, [216, 207, 214, 212, 206, 92])
 
         signals = {
             "HeadPitch": angles[0],
@@ -150,7 +151,8 @@ class SignalsCalculater:
             "BrowOuterUpLeft": l_brow_outer_up,
             "BrowOuterUpRight": r_brow_outer_up,
             "BrowInnerUp": brow_inner_up,
-            "BrowInnerDown": brow_inner_up
+            "BrowInnerDown": brow_inner_up,
+            "MouthSmile": smile
         }
 
         return signals
@@ -252,6 +254,18 @@ class SignalsCalculater:
         m134[:2, 2] = p4
 
         return (np.linalg.det(m124) * np.linalg.det(m135)) / (np.linalg.det(m125) * np.linalg.det(m134))
+
+    def cross_cross_ratio(self, landmarks, indices):
+        """
+
+        :param landmarks: list of landmarks
+        :param indices: indices of 6 landmarks to use
+        :return: cross cross ratio
+        """
+        assert len(indices) == 6
+
+        return self.five_point_cross_ratio(landmarks, [indices[0]] + indices[2:6]) / self.five_point_cross_ratio(
+            landmarks, [indices[1]] + indices[2:6])
 
     def set_filter_value(self, field_name: str, filter_value: float):
         signal = getattr(self.result, field_name, None)

@@ -55,10 +55,17 @@
     "filter_value": 0.0001,
     "actions":  []
   },
-    {
+  {
     "name": "BrowInnerDown",
     "lower_threshold": 1,
     "higher_threshold": 1.5,
+    "filter_value": 0.0001,
+    "actions":  []
+  },
+  {
+    "name": "MouthSmile",
+    "lower_threshold": -1,
+    "higher_threshold": 0.1,
     "filter_value": 0.0001,
     "actions":  []
   }
