@@ -1,0 +1,82 @@
+[
+  {
+    "action": "keyboard_key",
+    "signal": "JawOpen",
+    "threshold": 0.5,
+    "trigger": "hold high",
+    "action_type": "press",
+    "key": "W"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "MouthPuck",
+    "threshold": 0.5,
+    "trigger": "hold high",
+    "action_type": "press",
+    "key": "S"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "HeadRoll",
+    "threshold": 0.69,
+    "trigger": "hold high",
+    "action_type": "press",
+    "key": "A"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "HeadRoll",
+    "threshold": 0.31,
+    "trigger": "hold low",
+    "action_type": "press",
+    "key": "D"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "JawOpen",
+    "threshold": 0.5,
+    "trigger": "down",
+    "action_type": "release",
+    "key": "W"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "MouthPuck",
+    "threshold": 0.5,
+    "trigger": "down",
+    "action_type": "release",
+    "key": "S"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "HeadRoll",
+    "threshold": 0.31,
+    "trigger": "up",
+    "action_type": "release",
+    "key": "D"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "HeadRoll",
+    "threshold": 0.69,
+    "trigger": "down",
+    "action_type": "release",
+    "key": "A"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "BrowInnerDown",
+    "threshold": 0.5,
+    "trigger": "up",
+    "action_type": "press and release",
+    "key": "Esc"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "BrowInnerUp",
+    "threshold": 0.5,
+    "trigger": "up",
+    "action_type": "press and release",
+    "key": "E"
+  }
+]
