@@ -111,7 +111,6 @@ class SignalsCalculater:
         self.neutral_landmarks = np.zeros((478, 3))
         self.camera_parameters = camera_parameters
         self.head_pose_calculator = PnPHeadPose()
-        self.monitor = monitor.monitor()
         self.pcf = PCF(1, 10000, 720, 1280)
         self.frame_size = frame_size
 
@@ -193,13 +192,6 @@ class SignalsCalculater:
         translation = pose_matrix[3, :3]
         rvec = Rotation.from_matrix(rotatiom_matirx)
         return rvec.as_rotvec(), translation
-
-    def get_screen_intersection(self):
-        rotation_matrix, _ = cv2.Rodrigues(self.result.rvec)
-        forward = np.matmul(rotation_matrix, np.array([0., 0., -1.]))
-        screen_point = self.result.nosetip - self.result.nosetip[2] / forward[2] * forward
-        x_pixel, y_pixel = self.monitor.camera_to_monitor(10 * screen_point[0], 10 * screen_point[1])
-        return x_pixel, y_pixel
 
     def get_jaw_open(self, landmarks):
         mouth_distance = np.linalg.norm(landmarks[14, :] - landmarks[13, :])

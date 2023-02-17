@@ -38,8 +38,6 @@ class Demo(QThread):
         self.UDP_PORT = 11111
         self.socket = None
 
-        self.monitor = monitor.monitor()
-
         self.camera_parameters = (1000, 1000, 1280 / 2, 720 / 2)
         self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters,
                                                                      frame_size=(self.frame_width, self.frame_height))
