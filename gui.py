@@ -15,8 +15,6 @@ import Demo
 import Signal
 from gui_widgets import LogarithmicSlider
 
-#! .venv/bin/python
-
 class PlotLine:
     def __init__(self, pen, plot_data_item: pg.PlotDataItem):
         self.x = [0.] * 100
