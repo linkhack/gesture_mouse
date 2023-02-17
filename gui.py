@@ -5,8 +5,8 @@ import time
 import uuid
 from typing import List, Dict
 
-import mouse
-import keyboard
+from pynput import mouse
+from pynput import keyboard
 import pygame
 import pyqtgraph as pg
 from PySide6 import QtWidgets, QtCore, QtGui
@@ -208,7 +208,7 @@ class MouseTab(QtWidgets.QWidget):
         if selected_text == "-":
             return
         action = Signal.Action()
-        action.up_action = lambda: self.demo.mouse.click(mouse.LEFT)
+        action.up_action = lambda: self.demo.mouse.click(mouse.Button.left)
         self.demo.signals[selected_text].add_action(self.left_click_uid, action)
 
     def set_right_click(self, selected_text: str):
@@ -220,7 +220,7 @@ class MouseTab(QtWidgets.QWidget):
         if selected_text == "-":
             return
         action = Signal.Action()
-        action.up_action = lambda: self.demo.mouse.click(mouse.RIGHT)
+        action.up_action = lambda: self.demo.mouse.click(mouse.Button.right)
         self.demo.signals[selected_text].add_action(self.double_click_uid, action)
 
     def set_double_click(self, selected_text: str):
@@ -232,7 +232,7 @@ class MouseTab(QtWidgets.QWidget):
         if selected_text == "-":
             return
         action = Signal.Action()
-        action.up_action = lambda: self.demo.mouse.double_click(mouse.LEFT)
+        action.up_action = lambda: self.demo.mouse.double_click(mouse.Button.left)
         self.demo.signals[selected_text].add_action(self.double_click_uid, action)
 
 
@@ -315,6 +315,8 @@ class KeyboardTab(QtWidgets.QWidget):
         self.actions: Dict[uuid.UUID, KeyboardActionWidget] = {}
         self.signals: List[str] = []
 
+        self.keyboard_controller = keyboard.Controller()
+
     def add_action(self):
         name = uuid.uuid4()
         action_widget = KeyboardActionWidget(name=name)
@@ -373,18 +375,20 @@ class KeyboardTab(QtWidgets.QWidget):
         action_function = None
         if action_type == "press":
             def action_function():
-                keyboard.press(key_sequence_string)
+                self.keyboard_controller.press(key_sequence_string)
 
         elif action_type == "release":
             def action_function():
-                keyboard.release(key_sequence_string)
+                self.keyboard_controller.release(key_sequence_string)
         elif action_type == "hold":
+            # Todo: Is this needed? What should this mode do
             def action_function():
-                keyboard.press(key_sequence_string)
-                keyboard.call_later(lambda key=key_sequence_string: keyboard.release(key), delay=0.02)
+                self.keyboard_controller.press(key_sequence_string)
+                self.keyboard_controller.release(key_sequence_string)
         elif action_type == "press and release":
             def action_function():
-                keyboard.send(key_sequence_string)
+                self.keyboard_controller.press(key_sequence_string)
+                self.keyboard_controller.release(key_sequence_string)
         else:
             return
 

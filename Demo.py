@@ -95,12 +95,6 @@ class Demo(QThread):
 
                 result = self.signal_calculator.process(np_landmarks)
 
-                ## Calculate point on screen
-
-                x_pixel, y_pixel = result["screen_xy"]
-
-                # self.raw_signal = result
-
                 for signal_name in self.signals:
                     value = result[signal_name]
                     self.signals[signal_name].set_value(value)

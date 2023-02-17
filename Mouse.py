@@ -1,5 +1,5 @@
 
-import mouse
+from pynput import mouse
 # import pygame
 import screeninfo
 
@@ -9,24 +9,19 @@ class Mouse:
         self.x = 0
         self.y = 0
         self.mouse_listener = None
-
-        monitors = screeninfo.get_monitors()
-        default_screen = monitors[0]  # TODO: multiscreen?
-
-        self.h_pixels = default_screen.height
-        self.w_pixels = default_screen.width
+        self.mouse_controller = mouse.Controller()
 
     def move(self, x: int, y: int, absolute: bool = True):
         if absolute:
             self.x = x
             self.y = y
-            mouse.move(x, y, absolute)
+            self.mouse_controller.position = (self.x, self.y)
         else:
             dx = (x - self.x)
             dy = (y - self.y)
             self.x += dx
             self.y += dy
-            mouse.move(dx, dy, absolute)
+            self.mouse_controller.move(dx, dy)
 
     def update(self, x, y):
         self.x = x
@@ -50,7 +45,7 @@ class Mouse:
         :param button: str, one of the buttons to click
         :return:
         """
-        mouse.click(button)
+        self.mouse_controller.click(button)
 
     def double_click(self, button):
         """
@@ -58,7 +53,7 @@ class Mouse:
         :param button: str, one of the buttons to click
         :return:
         """
-        mouse.click(button)
+        self.mouse_controller.click(button, 2)
 
     def disable_gesture(self):
         pass

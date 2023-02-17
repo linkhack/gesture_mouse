@@ -9,3 +9,4 @@ pyqtgraph
 pygame
 screeninfo
 timecode
+pynput

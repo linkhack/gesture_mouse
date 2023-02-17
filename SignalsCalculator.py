@@ -132,9 +132,6 @@ class SignalsCalculater:
         self.result.jaw_open.set(jaw_open)
         mouth_puck = self.get_mouth_puck(landmarks)
         self.result.mouth_puck.set(mouth_puck)
-        screen_xy = self.get_screen_intersection()
-        screen_xy = np.array(screen_xy)
-        self.result.screen_xy.set(screen_xy)
         l_brow_outer_up = self.cross_ratio_colinear(landmarks, [225, 46, 70, 71])
         r_brow_outer_up = self.cross_ratio_colinear(landmarks, [445, 276, 300, 301])
         brow_inner_up = self.five_point_cross_ratio(landmarks, [9, 69, 299, 65, 295])
@@ -146,7 +143,6 @@ class SignalsCalculater:
             "HeadRoll": angles[2],
             "JawOpen": jaw_open,
             "MouthPuck": mouth_puck,
-            "screen_xy": self.result.screen_xy.get(),
             "BrowOuterUpLeft": l_brow_outer_up,
             "BrowOuterUpRight": r_brow_outer_up,
             "BrowInnerUp": brow_inner_up,
