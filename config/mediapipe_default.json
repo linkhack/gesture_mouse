@@ -3,7 +3,7 @@
     "name": "HeadPitch",
     "lower_threshold": 25.0,
     "higher_threshold": -25.0,
-    "filter_value": 0.0001,
+    "filter_value": 0.01,
     "actions":  []
   },
   {
@@ -17,7 +17,7 @@
     "name": "HeadYaw",
     "lower_threshold": 25.0,
     "higher_threshold": -25.0,
-    "filter_value": 0.0001,
+    "filter_value": 0.01,
     "actions":  []
   },
   {
