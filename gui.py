@@ -1,3 +1,5 @@
+#! .venv/bin/python
+
 import json
 import time
 import uuid
@@ -12,8 +14,6 @@ from PySide6 import QtWidgets, QtCore, QtGui
 import Demo
 import Signal
 from gui_widgets import LogarithmicSlider
-
-#! .venv/bin/python
 
 class PlotLine:
     def __init__(self, pen, plot_data_item: pg.PlotDataItem):
