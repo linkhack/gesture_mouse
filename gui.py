@@ -1,4 +1,4 @@
-#! .venv/bin/python python
+#! .venv/bin/ python
 
 import json
 import time
