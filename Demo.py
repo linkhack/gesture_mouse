@@ -179,7 +179,9 @@ class Demo(QThread):
             self.enable_gesture_mouse()
 
     def set_filter_value(self, name: str, filter_value: float):
-        self.signals[name].set_filter_value(filter_value)
+        signal = self.signals.get(name, None)
+        if signal is not None:
+            signal.set_filter_value(filter_value)
 
     def set_use_mediapipe(self, selected: bool):
         self.use_mediapipe = selected

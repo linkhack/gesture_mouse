@@ -14,6 +14,7 @@ from PySide6 import QtWidgets, QtCore, QtGui
 import Demo
 import Signal
 from gui_widgets import LogarithmicSlider
+import re
 
 class PlotLine:
     def __init__(self, pen, plot_data_item: pg.PlotDataItem):
@@ -355,7 +356,7 @@ class KeyboardTab(QtWidgets.QWidget):
         key_sequence_string = key_sequence.toString().lower()
         threshold = action_widget.threshold.value()
         print(f"{uid} / {new_signal} / {trigger} / {action_type} / {key_sequence_string} / {threshold}")
-
+        print(re.split(r',\s', key_sequence_string))
         # delete old signal
         signal = self.demo.signals.get(action_widget.current_signal, None)
         if signal is not None:
