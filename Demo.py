@@ -5,7 +5,6 @@ import socket
 import json
 from typing import Dict
 
-import keyboard
 import mediapipe as mp
 import cv2
 import numpy as np
@@ -48,9 +47,10 @@ class Demo(QThread):
         self.landmark_kalman = [Kalman1D(R=0.006 ** 2) for _ in range(468)]
 
         # add hotkey
+        # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
-        keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())
-        keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
+        # keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())
+        # keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
         self.transformed_signals = SignalsCalculator.SignalsResult()

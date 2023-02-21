@@ -8,6 +8,10 @@ class Mouse:
     def __init__(self):
         self.x = 0
         self.y = 0
+        monitors = screeninfo.get_monitors()
+        default_screen = monitors[0]  # TODO: multiscreen?
+        self.h_pixels = default_screen.height
+        self.w_pixels = default_screen.width
         self.mouse_listener = None
         self.mouse_controller = mouse.Controller()
 
