@@ -121,7 +121,7 @@ class Demo(QThread):
                     self.mouse.process_signal(self.signals)
 
     def __start_camera(self):
-        self.cam_cap = cv2.VideoCapture(2)
+        self.cam_cap = cv2.VideoCapture(0)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
 
