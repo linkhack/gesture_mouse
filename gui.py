@@ -16,6 +16,7 @@ import Signal
 from gui_widgets import LogarithmicSlider
 import re
 
+
 class PlotLine:
     def __init__(self, pen, plot_data_item: pg.PlotDataItem):
         self.x = [0.] * 100
@@ -316,7 +317,7 @@ class KeyboardTab(QtWidgets.QWidget):
         self.actions: Dict[uuid.UUID, KeyboardActionWidget] = {}
         self.signals: List[str] = []
 
-        self.keyboard_controller = keyboard.Controller()
+        self.keyboard_controller: keyboard.Controller = keyboard.Controller()
 
     def add_action(self):
         name = uuid.uuid4()
@@ -356,7 +357,6 @@ class KeyboardTab(QtWidgets.QWidget):
         key_sequence_string = key_sequence.toString().lower()
         threshold = action_widget.threshold.value()
         print(f"{uid} / {new_signal} / {trigger} / {action_type} / {key_sequence_string} / {threshold}")
-        print(re.split(r',\s', key_sequence_string))
         # delete old signal
         signal = self.demo.signals.get(action_widget.current_signal, None)
         if signal is not None:
@@ -370,26 +370,49 @@ class KeyboardTab(QtWidgets.QWidget):
         if key_sequence_string == "":
             return
 
+        # TODO: move into keyboard class
+
+        parsed_hotkeys = []
+        for hotkey in re.split(r',\s', key_sequence_string):
+            hotkey_string = re.sub(r'([a-z]{2,})', r'<\1>', hotkey)
+            hotkey_string = hotkey_string.replace("del", "delete")
+            hotkey_string = hotkey_string.replace("capslock", "caps_lock")
+            # TODO: find missmatched strings
+            parsed_hotkeys.append(keyboard.HotKey.parse(hotkey_string))
+        print("Parsed hotkey ", parsed_hotkeys)
+
         # create new action
         new_action = Signal.Action()
         new_action.threshold = threshold
         action_function = None
         if action_type == "press":
             def action_function():
-                self.keyboard_controller.press(key_sequence_string)
+                for key_combo in parsed_hotkeys:
+                    for key in key_combo:
+                        self.keyboard_controller.press(key)
 
         elif action_type == "release":
             def action_function():
-                self.keyboard_controller.release(key_sequence_string)
+                for key_combo in reversed(parsed_hotkeys):
+                    for key in reversed(key_combo):
+                        self.keyboard_controller.release(key)
         elif action_type == "hold":
             # Todo: Is this needed? What should this mode do
             def action_function():
-                self.keyboard_controller.press(key_sequence_string)
-                self.keyboard_controller.release(key_sequence_string)
+                for key_combo in parsed_hotkeys:
+                    for key in key_combo:
+                        self.keyboard_controller.press(key)
+                for key_combo in reversed(parsed_hotkeys):
+                    for key in reversed(key_combo):
+                        self.keyboard_controller.release(key)
         elif action_type == "press and release":
             def action_function():
-                self.keyboard_controller.press(key_sequence_string)
-                self.keyboard_controller.release(key_sequence_string)
+                for key_combo in parsed_hotkeys:
+                    for key in key_combo:
+                        self.keyboard_controller.press(key)
+                for key_combo in reversed(parsed_hotkeys):
+                    for key in reversed(key_combo):
+                        self.keyboard_controller.release(key)
         else:
             return
 
