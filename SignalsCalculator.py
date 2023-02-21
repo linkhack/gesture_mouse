@@ -132,9 +132,6 @@ class SignalsCalculater:
         self.result.jaw_open.set(jaw_open)
         mouth_puck = self.get_mouth_puck(landmarks)
         self.result.mouth_puck.set(mouth_puck)
-        screen_xy = self.get_screen_intersection()
-        screen_xy = np.array(screen_xy)
-        self.result.screen_xy.set(screen_xy)
         l_brow_outer_up = self.cross_ratio_colinear(landmarks, [225, 46, 70, 71])
         r_brow_outer_up = self.cross_ratio_colinear(landmarks, [445, 276, 300, 301])
         brow_inner_up = self.five_point_cross_ratio(landmarks, [9, 69, 299, 65, 295])
@@ -221,7 +218,7 @@ class SignalsCalculater:
 
     def five_point_cross_ratio(self, landmarks, indices):
         """
-        Calculates the cross ratio of 5 colinear points
+        Calculates the cross ratio of 5 coplanar points
         :param landmarks: list of landmarks
         :param indices: indices of 5 landmarks to use
         :return: cross_ratio of the 5 points (is invariant under projective transformations
