@@ -8,5 +8,8 @@ def test_read_image():
                                                                  'G'))  # From https://forum.opencv.org/t/videoio-v4l2-dev-video0-select-timeout/8822/4 for linux
     while cam_cap.isOpened():
         success, image = cam_cap.read()
-        print(image)
-        print(success)
+        cv2.imshow("test", image)
+        cv2.waitKey(1)
+
+if __name__ == '__main__':
+    test_read_image()

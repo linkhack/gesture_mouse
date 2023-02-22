@@ -7,7 +7,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
 
 
-def show_landmarks(landmarks, image):
+def annotate_landmark_image(landmarks, image):
     annotated_image = image.copy()
     ## different connections possible (lips, eye brows, etc)
 
@@ -36,8 +36,7 @@ def show_landmarks(landmarks, image):
         connection_drawing_spec=mp_drawing_styles
         .get_default_face_mesh_iris_connections_style())
 
-    cv2.imshow('MediaPipe Face Mesh', cv2.flip(annotated_image, 1))
-    cv2.waitKey(1)
+    return cv2.flip(annotated_image, 1)
 
 
 def show_por(x_pixel, y_pixel, width, height):

@@ -32,6 +32,7 @@ class Demo(QThread):
         self.mouse = Mouse.Mouse()
 
         self.frame_width, self.frame_height = (1280, 720)
+        self.annotated_landmarks = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.int8)
         self.cam_cap = None
 
         self.UDP_PORT = 11111
@@ -102,7 +103,7 @@ class Demo(QThread):
                 if self.mouse_enabled:
                     self.mouse.process_signal(self.signals)
                 # Debug
-                DrawingDebug.show_landmarks(landmarks, image)
+                self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
                 # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
 
     def __run_livelinkface(self):
