@@ -549,7 +549,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 def test_gui():
-    pygame.init()
     app = QtWidgets.QApplication([])
     window = MainWindow()
     window.resize(1280, 720)

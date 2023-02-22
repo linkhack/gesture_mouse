@@ -124,6 +124,7 @@ class Demo(QThread):
         self.cam_cap = cv2.VideoCapture(0)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
+        self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')) # From https://forum.opencv.org/t/videoio-v4l2-dev-video0-select-timeout/8822/4 for linux
 
     def __stop_camera(self):
         if self.cam_cap is not None:
