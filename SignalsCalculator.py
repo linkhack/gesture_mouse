@@ -143,7 +143,6 @@ class SignalsCalculater:
             "HeadRoll": angles[2],
             "JawOpen": jaw_open,
             "MouthPuck": mouth_puck,
-            "screen_xy": self.result.screen_xy.get(),
             "BrowOuterUpLeft": l_brow_outer_up,
             "BrowOuterUpRight": r_brow_outer_up,
             "BrowInnerUp": brow_inner_up,

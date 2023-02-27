@@ -5,7 +5,6 @@ import socket
 import json
 from typing import Dict
 
-import keyboard
 import mediapipe as mp
 import cv2
 import numpy as np
@@ -33,6 +32,8 @@ class Demo(QThread):
         self.mouse = Mouse.Mouse()
 
         self.frame_width, self.frame_height = (1280, 720)
+        self.annotated_landmarks = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.int8)
+        self.fps_counter = 0.
         self.cam_cap = None
 
         self.UDP_PORT = 11111
@@ -48,9 +49,10 @@ class Demo(QThread):
         self.landmark_kalman = [Kalman1D(R=0.006 ** 2) for _ in range(468)]
 
         # add hotkey
+        # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
-        keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())
-        keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
+        # keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())
+        # keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
         self.transformed_signals = SignalsCalculator.SignalsResult()
@@ -72,6 +74,7 @@ class Demo(QThread):
 
     def __run_mediapipe(self):
         with mp_face_mesh.FaceMesh(refine_landmarks=True) as face_mesh:
+            start_time = time.time()
             while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
                 success, image = self.cam_cap.read()
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -95,12 +98,6 @@ class Demo(QThread):
 
                 result = self.signal_calculator.process(np_landmarks)
 
-                ## Calculate point on screen
-
-                x_pixel, y_pixel = result["screen_xy"]
-
-                # self.raw_signal = result
-
                 for signal_name in self.signals:
                     value = result[signal_name]
                     self.signals[signal_name].set_value(value)
@@ -108,8 +105,11 @@ class Demo(QThread):
                 if self.mouse_enabled:
                     self.mouse.process_signal(self.signals)
                 # Debug
-                DrawingDebug.show_landmarks(landmarks, image)
+                self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
                 # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
+                frame_time = time.time()-start_time
+                self.fps_counter = 1/frame_time
+                start_time = time.time()
 
     def __run_livelinkface(self):
         while self.is_running and not self.use_mediapipe:
@@ -130,6 +130,7 @@ class Demo(QThread):
         self.cam_cap = cv2.VideoCapture(0)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
+        self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')) # From https://forum.opencv.org/t/videoio-v4l2-dev-video0-select-timeout/8822/4 for linux
 
     def __stop_camera(self):
         if self.cam_cap is not None:
@@ -185,7 +186,9 @@ class Demo(QThread):
             self.enable_gesture_mouse()
 
     def set_filter_value(self, name: str, filter_value: float):
-        self.signals[name].set_filter_value(filter_value)
+        signal = self.signals.get(name, None)
+        if signal is not None:
+            signal.set_filter_value(filter_value)
 
     def set_use_mediapipe(self, selected: bool):
         self.use_mediapipe = selected

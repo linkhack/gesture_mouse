@@ -5,8 +5,8 @@ import time
 import uuid
 from typing import List, Dict
 
-import mouse
-import keyboard
+from pynput import mouse
+from pynput import keyboard
 import pygame
 import pyqtgraph as pg
 from PySide6 import QtWidgets, QtCore, QtGui
@@ -14,6 +14,8 @@ from PySide6 import QtWidgets, QtCore, QtGui
 import Demo
 import Signal
 from gui_widgets import LogarithmicSlider
+import re
+
 
 class PlotLine:
     def __init__(self, pen, plot_data_item: pg.PlotDataItem):
@@ -152,6 +154,37 @@ class SignalTab(QtWidgets.QWidget):
         self.signals_vis.update_plot(signals)
 
 
+class DebugVisualizetion(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.webcam_label = QtWidgets.QLabel()
+        self.webcam_label.setMinimumSize(1, 1)
+        self.webcam_label.setMaximumSize(1280, 720)
+        self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
+        self.status_bar = QtWidgets.QStatusBar()
+        self.status_bar.showMessage("FPS: ")
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.webcam_label)
+        self.layout.addWidget(self.status_bar)
+
+    def update_image(self, image):
+        w = self.webcam_label.width()
+        h = self.webcam_label.height()
+        self.qt_image = QtGui.QImage(image.copy(), image.shape[1], image.shape[0], QtGui.QImage.Format.Format_BGR888)
+        self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
+
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self.webcam_label.resizeEvent(event)
+        self.status_bar.resizeEvent(event)
+        w = self.webcam_label.width()
+        h = self.webcam_label.height()
+        self.qt_image=self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
+
+
+
 class GeneralTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
@@ -162,9 +195,21 @@ class GeneralTab(QtWidgets.QWidget):
         self.landmark_filter_button = QtWidgets.QCheckBox(text="Filter Landmarks.")
         self.landmark_filter_button.setChecked(False)
         self.landmark_filter_button.clicked.connect(lambda selected: self.demo.set_filter_landmarks(selected))
+        self.debug_window = DebugVisualizetion()
+        self.debug_window_button = QtWidgets.QPushButton("Open Debug Menu")
+        self.debug_window_button.clicked.connect(self.toggle_debug_window)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.mediapipe_selector_button)
         self.layout.addWidget(self.landmark_filter_button)
+        self.layout.addWidget(self.debug_window_button)
+        self.layout.addStretch()
+
+    def toggle_debug_window(self):
+        self.debug_window.show()
+
+    def update_debug_visualization(self):
+        self.debug_window.update_image(self.demo.annotated_landmarks)
+        self.debug_window.status_bar.showMessage(f"FPS: {self.demo.fps_counter}")
 
 
 class MouseTab(QtWidgets.QWidget):
@@ -208,7 +253,7 @@ class MouseTab(QtWidgets.QWidget):
         if selected_text == "-":
             return
         action = Signal.Action()
-        action.up_action = lambda: self.demo.mouse.click(mouse.LEFT)
+        action.up_action = lambda: self.demo.mouse.click(mouse.Button.left)
         self.demo.signals[selected_text].add_action(self.left_click_uid, action)
 
     def set_right_click(self, selected_text: str):
@@ -220,7 +265,7 @@ class MouseTab(QtWidgets.QWidget):
         if selected_text == "-":
             return
         action = Signal.Action()
-        action.up_action = lambda: self.demo.mouse.click(mouse.RIGHT)
+        action.up_action = lambda: self.demo.mouse.click(mouse.Button.right)
         self.demo.signals[selected_text].add_action(self.double_click_uid, action)
 
     def set_double_click(self, selected_text: str):
@@ -232,7 +277,7 @@ class MouseTab(QtWidgets.QWidget):
         if selected_text == "-":
             return
         action = Signal.Action()
-        action.up_action = lambda: self.demo.mouse.double_click(mouse.LEFT)
+        action.up_action = lambda: self.demo.mouse.double_click(mouse.Button.left)
         self.demo.signals[selected_text].add_action(self.double_click_uid, action)
 
 
@@ -315,6 +360,8 @@ class KeyboardTab(QtWidgets.QWidget):
         self.actions: Dict[uuid.UUID, KeyboardActionWidget] = {}
         self.signals: List[str] = []
 
+        self.keyboard_controller: keyboard.Controller = keyboard.Controller()
+
     def add_action(self):
         name = uuid.uuid4()
         action_widget = KeyboardActionWidget(name=name)
@@ -353,7 +400,6 @@ class KeyboardTab(QtWidgets.QWidget):
         key_sequence_string = key_sequence.toString().lower()
         threshold = action_widget.threshold.value()
         print(f"{uid} / {new_signal} / {trigger} / {action_type} / {key_sequence_string} / {threshold}")
-
         # delete old signal
         signal = self.demo.signals.get(action_widget.current_signal, None)
         if signal is not None:
@@ -367,24 +413,49 @@ class KeyboardTab(QtWidgets.QWidget):
         if key_sequence_string == "":
             return
 
+        # TODO: move into keyboard class
+
+        parsed_hotkeys = []
+        for hotkey in re.split(r',\s', key_sequence_string):
+            hotkey_string = re.sub(r'([a-z]{2,})', r'<\1>', hotkey)
+            hotkey_string = hotkey_string.replace("del", "delete")
+            hotkey_string = hotkey_string.replace("capslock", "caps_lock")
+            # TODO: find missmatched strings
+            parsed_hotkeys.append(keyboard.HotKey.parse(hotkey_string))
+        print("Parsed hotkey ", parsed_hotkeys)
+
         # create new action
         new_action = Signal.Action()
         new_action.threshold = threshold
         action_function = None
         if action_type == "press":
             def action_function():
-                keyboard.press(key_sequence_string)
+                for key_combo in parsed_hotkeys:
+                    for key in key_combo:
+                        self.keyboard_controller.press(key)
 
         elif action_type == "release":
             def action_function():
-                keyboard.release(key_sequence_string)
+                for key_combo in reversed(parsed_hotkeys):
+                    for key in reversed(key_combo):
+                        self.keyboard_controller.release(key)
         elif action_type == "hold":
+            # Todo: Is this needed? What should this mode do
             def action_function():
-                keyboard.press(key_sequence_string)
-                keyboard.call_later(lambda key=key_sequence_string: keyboard.release(key), delay=0.02)
+                for key_combo in parsed_hotkeys:
+                    for key in key_combo:
+                        self.keyboard_controller.press(key)
+                for key_combo in reversed(parsed_hotkeys):
+                    for key in reversed(key_combo):
+                        self.keyboard_controller.release(key)
         elif action_type == "press and release":
             def action_function():
-                keyboard.send(key_sequence_string)
+                for key_combo in parsed_hotkeys:
+                    for key in key_combo:
+                        self.keyboard_controller.press(key)
+                for key_combo in reversed(parsed_hotkeys):
+                    for key in reversed(key_combo):
+                        self.keyboard_controller.release(key)
         else:
             return
 
@@ -491,7 +562,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(50)
+        self.timer.setInterval(30)
         self.timer.timeout.connect(self.update_plots)
         self.timer.start()
 
@@ -503,6 +574,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_plots(self):
         # TODO: move up again
         self.selected_signals.update_plots(self.demo.signals)
+        self.general_tab.update_debug_visualization()
 
     def change_signals_tab(self, checked: bool):
         if checked:
@@ -521,7 +593,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 def test_gui():
-    pygame.init()
     app = QtWidgets.QApplication([])
     window = MainWindow()
     window.resize(1280, 720)
