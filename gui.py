@@ -154,6 +154,37 @@ class SignalTab(QtWidgets.QWidget):
         self.signals_vis.update_plot(signals)
 
 
+class DebugVisualizetion(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.webcam_label = QtWidgets.QLabel()
+        self.webcam_label.setMinimumSize(1, 1)
+        self.webcam_label.setMaximumSize(1280, 720)
+        self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
+        self.status_bar = QtWidgets.QStatusBar()
+        self.status_bar.showMessage("FPS: ")
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.webcam_label)
+        self.layout.addWidget(self.status_bar)
+
+    def update_image(self, image):
+        w = self.webcam_label.width()
+        h = self.webcam_label.height()
+        self.qt_image = QtGui.QImage(image.copy(), image.shape[1], image.shape[0], QtGui.QImage.Format.Format_BGR888)
+        self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
+
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self.webcam_label.resizeEvent(event)
+        self.status_bar.resizeEvent(event)
+        w = self.webcam_label.width()
+        h = self.webcam_label.height()
+        self.qt_image=self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
+
+
+
 class GeneralTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
@@ -164,9 +195,21 @@ class GeneralTab(QtWidgets.QWidget):
         self.landmark_filter_button = QtWidgets.QCheckBox(text="Filter Landmarks.")
         self.landmark_filter_button.setChecked(False)
         self.landmark_filter_button.clicked.connect(lambda selected: self.demo.set_filter_landmarks(selected))
+        self.debug_window = DebugVisualizetion()
+        self.debug_window_button = QtWidgets.QPushButton("Open Debug Menu")
+        self.debug_window_button.clicked.connect(self.toggle_debug_window)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.mediapipe_selector_button)
         self.layout.addWidget(self.landmark_filter_button)
+        self.layout.addWidget(self.debug_window_button)
+        self.layout.addStretch()
+
+    def toggle_debug_window(self):
+        self.debug_window.show()
+
+    def update_debug_visualization(self):
+        self.debug_window.update_image(self.demo.annotated_landmarks)
+        self.debug_window.status_bar.showMessage(f"FPS: {self.demo.fps_counter}")
 
 
 class MouseTab(QtWidgets.QWidget):
@@ -519,7 +562,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(50)
+        self.timer.setInterval(30)
         self.timer.timeout.connect(self.update_plots)
         self.timer.start()
 
@@ -531,6 +574,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_plots(self):
         # TODO: move up again
         self.selected_signals.update_plots(self.demo.signals)
+        self.general_tab.update_debug_visualization()
 
     def change_signals_tab(self, checked: bool):
         if checked:
