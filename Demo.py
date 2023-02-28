@@ -16,6 +16,7 @@ import SignalsCalculator
 import monitor
 from Signal import Signal
 from KalmanFilter1D import Kalman1D
+import FPSCounter
 
 from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
 
@@ -33,7 +34,8 @@ class Demo(QThread):
 
         self.frame_width, self.frame_height = (1280, 720)
         self.annotated_landmarks = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.int8)
-        self.fps_counter = 0.
+        self.fps_counter = FPSCounter.FPSCounter(20)
+        self.fps = 0
         self.cam_cap = None
 
         self.UDP_PORT = 11111
@@ -74,7 +76,6 @@ class Demo(QThread):
 
     def __run_mediapipe(self):
         with mp_face_mesh.FaceMesh(refine_landmarks=True) as face_mesh:
-            start_time = time.time()
             while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
                 success, image = self.cam_cap.read()
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -107,9 +108,9 @@ class Demo(QThread):
                 # Debug
                 self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
                 # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
-                frame_time = time.time()-start_time
-                self.fps_counter = 1/frame_time
-                start_time = time.time()
+
+                self.fps = self.fps_counter()
+
 
     def __run_livelinkface(self):
         while self.is_running and not self.use_mediapipe:
