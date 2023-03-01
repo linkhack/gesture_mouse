@@ -160,6 +160,22 @@ class SignalsCalculater:
         rvec, tvec = self.head_pose_calculator.fit_func(screen_landmarks, self.camera_parameters)
         return rvec, tvec
 
+    def pnp_reference_free(self, landmarks):
+        idx = [33, 263, 1, 61, 291, 199]
+        screen_landmarks = landmarks[idx, :2] * np.array(self.frame_size)
+        landmarks_3d = landmarks[idx, :] * np.array([self.frame_size[0], self.frame_size[1], 1])
+        fx, fy, cx, cy = self.camera_parameters
+
+        # Initial fit
+        camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float64)
+        success, rvec, tvec, inliers = cv2.solvePnPRansac(landmarks_3d, screen_landmarks,
+                                                          camera_matrix, None, flags=cv2.SOLVEPNP_EPNP)
+        # Second fit for higher accuracy
+        success, rvec, tvec = cv2.solvePnP(landmarks_3d, screen_landmarks, camera_matrix, None,
+                                           rvec=rvec, tvec=tvec, useExtrinsicGuess=True, flags=cv2.SOLVEPNP_ITERATIVE)
+
+        return rvec, tvec
+
     def geometric_head_pose(self, landmarks):
         nose = [8, 9, 10, 151]
         eyes = [33, 133, 362, 263]

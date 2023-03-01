@@ -451,8 +451,11 @@ class PnPHeadPose:
         self.canonical_metric_landmarks = np.matmul(self.canonical_metric_landmarks.reshape(-1, 3), rotate_mat)
 
         self.points_idx = [4, 6, 10, 33, 54, 67, 117, 119, 121, 127, 129, 132, 133, 136, 143, 147, 198, 205, 263, 284, 297, 346, 348, 350, 356, 358, 361, 362, 365, 372, 376, 420, 425]
+        #self.points_idx.append([33, 263, 1, 61, 291, 199])
+
         self.points_idx = list(set(self.points_idx))
         self.points_idx.sort()
+
 
         self.canoncial_metric_landmarks_pnp = self.canonical_metric_landmarks[self.points_idx, :]
         self.LEFT_EYE = {idx for connection in mp.solutions.face_mesh.FACEMESH_LEFT_EYE for idx in connection}

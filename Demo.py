@@ -49,12 +49,12 @@ class Demo(QThread):
 
         self.use_mediapipe = False
         self.filter_landmarks = False
-        self.landmark_kalman = [Kalman1D(R=0.006 ** 2) for _ in range(468)]
+        self.landmark_kalman = [Kalman1D(R=0.008 ** 2) for _ in range(468)]
 
         # add hotkey
         # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
-        # keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
+        keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
         # keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
