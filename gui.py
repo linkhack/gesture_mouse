@@ -170,8 +170,9 @@ class DebugVisualizetion(QtWidgets.QWidget):
     def update_image(self, image):
         w = self.webcam_label.width()
         h = self.webcam_label.height()
-        self.qt_image = QtGui.QImage(image.copy(), image.shape[1], image.shape[0], QtGui.QImage.Format.Format_BGR888)
-        self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.qt_image = QtGui.QImage(image, image.shape[1], image.shape[0], QtGui.QImage.Format.Format_BGR888)
+        self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                                             QtCore.Qt.TransformationMode.SmoothTransformation)
         self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
@@ -180,9 +181,8 @@ class DebugVisualizetion(QtWidgets.QWidget):
         self.status_bar.resizeEvent(event)
         w = self.webcam_label.width()
         h = self.webcam_label.height()
-        self.qt_image=self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
         self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
-
 
 
 class GeneralTab(QtWidgets.QWidget):

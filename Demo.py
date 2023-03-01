@@ -9,6 +9,7 @@ import mediapipe as mp
 import cv2
 import numpy as np
 from PySide6.QtCore import QThread
+import keyboard
 
 import Mouse
 import DrawingDebug
@@ -53,7 +54,7 @@ class Demo(QThread):
         # add hotkey
         # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
-        # keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())
+        keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
         # keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
@@ -111,7 +112,6 @@ class Demo(QThread):
 
                 self.fps = self.fps_counter()
 
-
     def __run_livelinkface(self):
         while self.is_running and not self.use_mediapipe:
             try:
@@ -131,7 +131,8 @@ class Demo(QThread):
         self.cam_cap = cv2.VideoCapture(0)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
-        self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')) # From https://forum.opencv.org/t/videoio-v4l2-dev-video0-select-timeout/8822/4 for linux
+        self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',
+                                                                     'G'))  # From https://forum.opencv.org/t/videoio-v4l2-dev-video0-select-timeout/8822/4 for linux
 
     def __stop_camera(self):
         if self.cam_cap is not None:
