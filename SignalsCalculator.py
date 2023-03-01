@@ -116,7 +116,7 @@ class SignalsCalculater:
 
     def process(self, landmarks):
         rvec, tvec = self.pnp_head_pose(landmarks)
-        landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1], self.frame_size[0]))
+        landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1], self.frame_size[0]))  # TODO: maybe move denormalization into methods
         r = Rotation.from_rotvec(np.squeeze(rvec))
 
         rotationmat = r.as_matrix()
@@ -135,8 +135,9 @@ class SignalsCalculater:
         l_brow_outer_up = self.cross_ratio_colinear(landmarks, [225, 46, 70, 71])
         r_brow_outer_up = self.cross_ratio_colinear(landmarks, [445, 276, 300, 301])
         brow_inner_up = self.five_point_cross_ratio(landmarks, [9, 69, 299, 65, 295])
-        smile = self.cross_cross_ratio(landmarks, [216, 207, 214, 212, 206, 92])
-
+        l_smile = self.cross_cross_ratio(landmarks, [216, 207, 214, 212, 206, 92])
+        r_smile = self.cross_cross_ratio(landmarks, [436, 427, 434, 432, 426, 322])
+        smile = 0.5 * (l_smile+r_smile)
         signals = {
             "HeadPitch": angles[0],
             "HeadYaw": angles[1],
@@ -270,6 +271,23 @@ class SignalsCalculater:
 
         return self.five_point_cross_ratio(landmarks, [indices[0]] + indices[2:6]) / self.five_point_cross_ratio(
             landmarks, [indices[1]] + indices[2:6])
+
+    def eye_aspect_ratio(self, landmarks, indices):
+        """
+        Calculates the eye aspect ratio for the given indices. indices are in the order P1, P2, P3, P4, P5, P6.
+        P1, P4 are the eye corners, P2 is opposite to P6 and P3 is opposite to P5.
+        ear = (P2_P6 + P3_P5) / (2.0 * P1_P4)
+
+        :param landmarks: landmarks in pixel coordinates
+        :param indices: indices of points P1, P2, P3, P4, P5, P6, P1, P2, P3, P4, P5, P6.
+        P1, P4 are the eye corners, P2 is opposite to P6 and P3 is opposite to P5
+        :return: ear = (P2_P6 + P3_P5) / (2.0 * P1_P4)
+        """
+        assert len(indices) == 6
+        p2_p6 = np.linalg.norm(landmarks[1]-landmarks[5])
+        p3_p5 = np.linalg.norm(landmarks[2]-landmarks[4])
+        p1_p4 = np.linalg.norm(landmarks[0]-landmarks[3])
+        return (p2_p6 + p3_p5) / (2.0 * p1_p4)
 
     def set_filter_value(self, field_name: str, filter_value: float):
         signal = getattr(self.result, field_name, None)
