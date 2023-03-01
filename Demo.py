@@ -54,7 +54,7 @@ class Demo(QThread):
         # add hotkey
         # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
-        keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
+        # keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
         # keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
