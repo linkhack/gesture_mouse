@@ -233,6 +233,7 @@ class MouseTab(QtWidgets.QWidget):
         layout.addWidget(self.left_click_settings)
         layout.addWidget(self.right_click_settings)
         layout.addWidget(self.double_click_settings)
+        layout.addStretch()
 
     def set_signal_selector(self, signals: List[str]):
         self.left_click_settings.signal_selector.clear()
@@ -255,6 +256,8 @@ class MouseTab(QtWidgets.QWidget):
             return
         action = Signal.Action()
         action.up_action = lambda: self.demo.mouse.click(mouse.Button.left)
+        action.set_threshold(self.left_click_settings.threshold.value())
+        action.set_delay(self.left_click_settings.delay.value())
         self.demo.signals[selected_text].add_action(self.left_click_uid, action)
 
     def set_right_click(self, selected_text: str):
@@ -267,6 +270,8 @@ class MouseTab(QtWidgets.QWidget):
             return
         action = Signal.Action()
         action.up_action = lambda: self.demo.mouse.click(mouse.Button.right)
+        action.set_threshold(self.right_click_settings.threshold.value())
+        action.set_delay(self.right_click_settings.delay.value())
         self.demo.signals[selected_text].add_action(self.double_click_uid, action)
 
     def set_double_click(self, selected_text: str):
@@ -279,6 +284,8 @@ class MouseTab(QtWidgets.QWidget):
             return
         action = Signal.Action()
         action.up_action = lambda: self.demo.mouse.double_click(mouse.Button.left)
+        action.set_threshold(self.double_click_settings.threshold.value())
+        action.set_delay(self.double_click_settings.delay.value())
         self.demo.signals[selected_text].add_action(self.double_click_uid, action)
 
 
@@ -287,9 +294,28 @@ class MouseClickSettings(QtWidgets.QWidget):
         super().__init__()
         layout = QtWidgets.QHBoxLayout(self)
         self.label = QtWidgets.QLabel(name)
+        self.threshold = QtWidgets.QDoubleSpinBox(self)
+        self.threshold.setMinimum(0.)
+        self.threshold.setMaximum(1.)
+        self.threshold.setSingleStep(0.01)
+        self.threshold.setValue(0.5)
+        self.delay = QtWidgets.QDoubleSpinBox(self)
+        self.delay.setMinimum(0.)
+        self.delay.setMaximum(10.)
+        self.delay.setSingleStep(0.01)
+        self.delay.setValue(0.5)
         self.signal_selector = QtWidgets.QComboBox()
+
         layout.addWidget(self.label)
+        layout.addStretch(1)
+        layout.addWidget(QtWidgets.QLabel("Threshold"))
+        layout.addWidget(self.threshold)
+        layout.addStretch(1)
+        layout.addWidget(QtWidgets.QLabel("Delay"))
+        layout.addWidget(self.delay)
+        layout.addStretch(1)
         layout.addWidget(self.signal_selector)
+        layout.addStretch(10)
 
 
 class KeyboardActionWidget(QtWidgets.QWidget):
@@ -307,6 +333,7 @@ class KeyboardActionWidget(QtWidgets.QWidget):
         self.threshold.setMaximum(1.)
         self.threshold.setSingleStep(0.01)
         self.threshold.setValue(0.5)
+        self.threshold.valueChanged.connect(self._emit_updated)
         self.delay = QtWidgets.QDoubleSpinBox(self)
         self.delay.setMinimum(0.)
         self.delay.setMaximum(10.)
