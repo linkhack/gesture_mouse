@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import os.path
 import time
 import uuid
 from typing import List, Dict
@@ -306,7 +307,12 @@ class KeyboardActionWidget(QtWidgets.QWidget):
         self.threshold.setMaximum(1.)
         self.threshold.setSingleStep(0.01)
         self.threshold.setValue(0.5)
-        self.threshold.valueChanged.connect(self._emit_updated)
+        self.delay = QtWidgets.QDoubleSpinBox(self)
+        self.delay.setMinimum(0.)
+        self.delay.setMaximum(10.)
+        self.delay.setSingleStep(0.01)
+        self.delay.setValue(0.5)
+        self.delay.valueChanged.connect(self._emit_updated)
         self.signal_selector = QtWidgets.QComboBox()
         self.signal_selector.currentTextChanged.connect(self._emit_updated)
         self.action_trigger_selector = QtWidgets.QComboBox()
@@ -321,8 +327,13 @@ class KeyboardActionWidget(QtWidgets.QWidget):
         self.remove_button = QtWidgets.QPushButton("Remove")
         self.remove_button.clicked.connect(self.remove_clicked.emit)
         self.layout.addWidget(self.signal_selector)
+        self.layout.addWidget(QtWidgets.QLabel("Threshold"))
         self.layout.addWidget(self.threshold)
+        self.layout.addWidget(QtWidgets.QLabel("Delay"))
+        self.layout.addWidget(self.delay)
+        self.layout.addWidget(QtWidgets.QLabel("Trigger"))
         self.layout.addWidget(self.action_trigger_selector)
+        self.layout.addWidget(QtWidgets.QLabel("Type"))
         self.layout.addWidget(self.action_type_selector)
         self.layout.addWidget(self.key_input)
         self.layout.addWidget(self.remove_button)
@@ -345,18 +356,32 @@ class KeyboardTab(QtWidgets.QWidget):
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.add_action_button, alignment=QtCore.Qt.AlignmentFlag.AlignTop)
         self.add_action_button.clicked.connect(self.add_action)
+
+        ## Scrollbar
+        self.scroll_area = QtWidgets.QScrollArea()
+        self.scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll_area.setWidgetResizable(True)
+
+        self.actions_widget = QtWidgets.QWidget()
+        self.actions_widget.setLayout(QtWidgets.QVBoxLayout())
+        self.actions_widget.layout().addStretch()
+        self.scroll_area.setWidget(self.actions_widget)
+        self.layout.addWidget(self.scroll_area)
+
         button_layout = QtWidgets.QHBoxLayout()
         self.save_actions_button = QtWidgets.QPushButton("Save profile")
         self.save_actions_button.clicked.connect(self.save_action)
         self.load_actions_button = QtWidgets.QPushButton("Load profile")
         self.load_actions_button.clicked.connect(self.load_profile)
-        self.layout.addStretch()
+        #self.layout.addStretch()
 
         button_layout.addStretch()
         button_layout.addWidget(self.load_actions_button)
         button_layout.addWidget(self.save_actions_button)
 
         self.layout.addLayout(button_layout)
+
         self.actions: Dict[uuid.UUID, KeyboardActionWidget] = {}
         self.signals: List[str] = []
 
@@ -365,7 +390,8 @@ class KeyboardTab(QtWidgets.QWidget):
     def add_action(self):
         name = uuid.uuid4()
         action_widget = KeyboardActionWidget(name=name)
-        self.layout.insertWidget(self.layout.count() - 2, action_widget)
+        self.actions_widget.layout().insertWidget(self.actions_widget.layout().count() - 1, action_widget)
+        # self.layout.insertWidget(self.layout.count() - 2, action_widget)
         self.actions[name] = action_widget
         action_widget.remove_clicked.connect(self.remove_action)
         action_widget.action_updated.connect(self.update_action)
@@ -381,7 +407,7 @@ class KeyboardTab(QtWidgets.QWidget):
         action_widget = self.sender()
         print(action_widget)
         self.actions.pop(action_widget.name, None)
-        self.layout.removeWidget(action_widget)
+        self.actions_widget.layout().removeWidget(action_widget)
         # Get signal
         signal = self.demo.signals.get(action_widget.current_signal, None)
         if signal is not None:
@@ -399,6 +425,8 @@ class KeyboardTab(QtWidgets.QWidget):
         key_sequence = action_widget.key_input.keySequence()
         key_sequence_string = key_sequence.toString().lower()
         threshold = action_widget.threshold.value()
+        delay = action_widget.delay.value()
+
         print(f"{uid} / {new_signal} / {trigger} / {action_type} / {key_sequence_string} / {threshold}")
         # delete old signal
         signal = self.demo.signals.get(action_widget.current_signal, None)
@@ -469,7 +497,7 @@ class KeyboardTab(QtWidgets.QWidget):
             new_action.set_low_hold_action(action_function)
         else:
             return
-
+        new_action.set_delay(delay)
         signal.add_action(uid, new_action)
 
     def save_action(self, filename):
@@ -483,10 +511,12 @@ class KeyboardTab(QtWidgets.QWidget):
             signal = action.signal_selector.currentText()
             action_type = action.action_type_selector.currentText()
             key = action.key_input.keySequence().toString()
+            delay = action.delay.value()
             serial_action = {
                 "action": f"keyboard_key",
                 "signal": signal,
                 "threshold": threshold,
+                "delay": delay,
                 "trigger": trigger,
                 "action_type": action_type,
                 "key": key
@@ -498,12 +528,14 @@ class KeyboardTab(QtWidgets.QWidget):
     def load_profile(self):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config/profiles",
                                                              "JSON (*.json)")
+        if not os.path.isfile(file_name):
+            raise FileNotFoundError(f"No such file or directory: {file_name}")
         for action in self.actions.values():
             signal_name = action.current_signal
             signal = self.demo.signals.get(signal_name, None)
             if signal is not None:
                 signal.remove_action(action.name)
-            self.layout.removeWidget(action)
+            self.actions_widget.layout().removeWidget(action)
             action.close()
         self.actions.clear()
         with open(file_name, "r") as f:
@@ -512,11 +544,12 @@ class KeyboardTab(QtWidgets.QWidget):
                 action_mapping = action["action"]
                 if action_mapping != "keyboard_key":
                     continue
-                signal = action["signal"]
-                threshold = float(action["threshold"])
-                trigger = action["trigger"]
-                action_type = action["action_type"]
-                key = action["key"]
+                signal = action.get("signal", "")
+                threshold = float(action.get("threshold", "0.5"))
+                trigger = action.get("trigger", "")
+                action_type = action.get("action_type", "")
+                key = action.get("key", "")
+                delay = float(action.get("delay", "0.5"))
 
                 # add widget
                 name = uuid.uuid4()
@@ -524,11 +557,12 @@ class KeyboardTab(QtWidgets.QWidget):
                 action_widget.set_signal_selector(self.signals)
                 action_widget.signal_selector.setCurrentText(signal)
                 action_widget.threshold.setValue(threshold)
+                action_widget.delay.setValue(delay)
                 action_widget.action_trigger_selector.setCurrentText(trigger)
                 action_widget.action_type_selector.setCurrentText(action_type)
                 action_widget.key_input.setKeySequence(key)
                 self.actions[action_widget.name] = action_widget
-                self.layout.insertWidget(self.layout.count() - 2, action_widget)
+                self.actions_widget.layout().insertWidget(self.actions_widget.layout().count() - 1, action_widget)
                 action_widget.remove_clicked.connect(self.remove_action)
                 action_widget.action_updated.connect(self.update_action)
                 action_widget.action_updated.emit()  # create associated action

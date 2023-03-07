@@ -5,6 +5,7 @@ import keyboard
 from typing import Callable, Dict
 import uuid
 import mouse
+import time
 
 
 def null_f():
@@ -14,11 +15,29 @@ def null_f():
 class Action:
     def __init__(self):
         self.old_value: float = 0.
+
+        # up action helpers
+        self.up_starttime: float = 0.
+        self.up_action_active: bool = False
+        self.up_activated = False
+
+        # down action helpers
+        self.down_action_active: bool = False
+        self.down_starttime: float = 0.
+        self.down_activated: bool = False
+
+        # hold low helpers
+        self.hold_low_active: bool = False
+
+        # hold high helpers
+        self.hold_high_active = False
+
         self.up_action: Callable[[], None] = null_f
         self.down_action: Callable[[], None] = null_f
         self.high_hold_action: Callable[[], None] = null_f
         self.low_hold_action: Callable[[], None] = null_f
         self.threshold: float = 0.5
+        self.delay: float = 0.5
 
     def update(self, value: float):
         """
@@ -30,15 +49,56 @@ class Action:
         sets old_value to value
         :param value: new signal value for this action
         """
-        if value <= self.threshold < self.old_value:
-            self.down_action()
-        elif value > self.threshold >= self.old_value:
-            self.up_action()
-        elif value > self.threshold and self.old_value >= self.threshold:
-            self.high_hold_action()
-        elif value <= self.threshold and self.old_value <= self.threshold:
-            self.low_hold_action()
+        new_time = time.time()
 
+        if value <= self.threshold < self.old_value:
+            # Start down action
+            self.down_action_active = True
+            self.down_starttime = time.time()
+
+            # Start hold low action
+            self.hold_low_starttime = time.time()
+            self.hold_low_active = True
+
+            # Stop up action
+            self.up_action_active = False
+            self.up_activated = False
+
+            # Stop hold high action
+            self.hold_high_active = False
+
+        elif value > self.threshold >= self.old_value:
+            # Start up action
+            self.up_action_active = True
+            self.up_starttime = time.time()
+
+            # Start hold high action
+            self.hold_high_starttime = time.time()
+            self.hold_high_active = True
+
+            # Stop down action
+            self.down_action_active = False
+            self.down_activated = False
+
+            # Stop hold low action
+            self.hold_low_active = False
+
+        elif value > self.threshold:
+            # check delay
+            if (new_time - self.up_starttime) >= self.delay:
+                if not self.up_activated:
+                    self.up_action()
+                    self.up_activated = True
+
+                self.high_hold_action()
+        elif value <= self.threshold:
+            # check delay
+            if (new_time - self.down_starttime) >= self.delay:
+                if not self.down_activated:
+                    self.down_action()
+                    self.down_activated = True
+
+                self.low_hold_action()
         self.old_value = value
 
     def set_up_action(self, action: Callable[[], None]):
@@ -75,6 +135,15 @@ class Action:
         :param value: New threshold
         """
         self.threshold = value
+
+    def set_delay(self, value: float):
+        """
+        Sets the amount of time a signal has to be present until the action is performed
+        :param value: activation time in seconds, has to ber >= 0
+        :return:
+        """
+        assert value >= 0
+        self.delay = value
 
 
 class Signal:
