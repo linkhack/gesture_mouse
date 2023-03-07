@@ -13,6 +13,8 @@ from typing import Tuple
 from numbers import Number
 from face_geometry import PCF, get_metric_landmarks
 
+from img2pose_estimator import img2poseEstimator
+
 
 class FilteredFloat:
     def __init__(self, value: Number, filter_value: float = None):
@@ -111,11 +113,14 @@ class SignalsCalculater:
         self.neutral_landmarks = np.zeros((478, 3))
         self.camera_parameters = camera_parameters
         self.head_pose_calculator = PnPHeadPose()
-        self.pcf = PCF(1, 10000, 720, 1280)
+        self.img2pose = img2poseEstimator()
+        self.pcf = PCF(1, 10000, frame_size[1], frame_size[0])
         self.frame_size = frame_size
 
-    def process(self, landmarks):
-        rvec, tvec = self.pnp_head_pose(landmarks)
+
+    def process(self, landmarks, image):
+        #rvec, tvec = self.pnp_head_pose(landmarks)
+        rvec, tvec = self.img2pose.estimate_pose(image)
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1], self.frame_size[0]))  # TODO: maybe move denormalization into methods
         r = Rotation.from_rotvec(np.squeeze(rvec))
 

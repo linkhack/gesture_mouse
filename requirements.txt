@@ -10,3 +10,4 @@ pygame
 screeninfo
 timecode
 pynput
+cython

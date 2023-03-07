@@ -33,7 +33,7 @@ class Demo(QThread):
         self.mouse_absolute = True
         self.mouse = Mouse.Mouse()
 
-        self.frame_width, self.frame_height = (1280, 720)
+        self.frame_width, self.frame_height = (640, 480)
         self.annotated_landmarks = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.int8)
         self.fps_counter = FPSCounter.FPSCounter(20)
         self.fps = 0
@@ -84,7 +84,7 @@ class Demo(QThread):
                 results = face_mesh.process(image)
                 image.flags.writeable = True
                 image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
+                self.fps = self.fps_counter()
                 if not results.multi_face_landmarks:
                     continue
                 landmarks = results.multi_face_landmarks[0]
@@ -98,7 +98,7 @@ class Demo(QThread):
                         np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
                             kalman_filters_landm_complex)
 
-                result = self.signal_calculator.process(np_landmarks)
+                result = self.signal_calculator.process(np_landmarks, image)
 
                 for signal_name in self.signals:
                     value = result[signal_name]
@@ -110,7 +110,7 @@ class Demo(QThread):
                 self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
                 # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
 
-                self.fps = self.fps_counter()
+
 
     def __run_livelinkface(self):
         while self.is_running and not self.use_mediapipe:
