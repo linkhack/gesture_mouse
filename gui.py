@@ -218,18 +218,22 @@ class MouseTab(QtWidgets.QWidget):
         super().__init__()
         self.demo: Demo.Demo = demo
         layout = QtWidgets.QVBoxLayout(self)
-        self.left_click_settings = MouseClickSettings("Left Click")
-        self.left_click_signal = "-"
+
         self.left_click_uid = uuid.uuid4()
+        self.left_click_settings = MouseClickSettings("Left Click", self.left_click_uid, demo)
+        self.left_click_signal = "-"
         self.left_click_settings.signal_selector.currentTextChanged.connect(self.set_left_click)
-        self.right_click_settings = MouseClickSettings("Right Click")
-        self.right_click_signal = "-"
+
         self.right_click_uid = uuid.uuid4()
+        self.right_click_settings = MouseClickSettings("Right Click", self.right_click_uid, demo)
+        self.right_click_signal = "-"
         self.right_click_settings.signal_selector.currentTextChanged.connect(self.set_right_click)
-        self.double_click_settings = MouseClickSettings("Double Click")
-        self.double_click_signal = "-"
+
         self.double_click_uid = uuid.uuid4()
+        self.double_click_settings = MouseClickSettings("Double Click", self.double_click_uid, demo)
+        self.double_click_signal = "-"
         self.double_click_settings.signal_selector.currentTextChanged.connect(self.set_double_click)
+
         layout.addWidget(self.left_click_settings)
         layout.addWidget(self.right_click_settings)
         layout.addWidget(self.double_click_settings)
@@ -290,20 +294,24 @@ class MouseTab(QtWidgets.QWidget):
 
 
 class MouseClickSettings(QtWidgets.QWidget):
-    def __init__(self, name):
+    def __init__(self, name, uid, demo):
         super().__init__()
         layout = QtWidgets.QHBoxLayout(self)
+        self.demo = demo
+        self.uid = uid
         self.label = QtWidgets.QLabel(name)
         self.threshold = QtWidgets.QDoubleSpinBox(self)
         self.threshold.setMinimum(0.)
         self.threshold.setMaximum(1.)
         self.threshold.setSingleStep(0.01)
         self.threshold.setValue(0.5)
+        self.threshold.valueChanged.connect(self.threshold_changed)
         self.delay = QtWidgets.QDoubleSpinBox(self)
         self.delay.setMinimum(0.)
-        self.delay.setMaximum(10.)
+        self.delay.setMaximum(2.)
         self.delay.setSingleStep(0.01)
         self.delay.setValue(0.5)
+        self.delay.valueChanged.connect(self.delay_changed)
         self.signal_selector = QtWidgets.QComboBox()
 
         layout.addWidget(self.label)
@@ -316,6 +324,24 @@ class MouseClickSettings(QtWidgets.QWidget):
         layout.addStretch(1)
         layout.addWidget(self.signal_selector)
         layout.addStretch(10)
+
+    def threshold_changed(self, new_threshold):
+        signal = self.demo.signals.get(self.signal_selector.currentText(), None)
+        if signal is None:
+            return  # no signal detected
+        action = signal.actions.get(self.uid, None)
+        if action is None:
+            return  # action not defined
+        action.set_threshold(new_threshold)
+
+    def delay_changed(self, new_delay):
+        signal = self.demo.signals.get(self.signal_selector.currentText(), None)
+        if signal is None:
+            return  # no signal detected
+        action = signal.actions.get(self.uid, None)
+        if action is None:
+            return  # action not defined
+        action.set_delay(new_delay)
 
 
 class KeyboardActionWidget(QtWidgets.QWidget):
@@ -336,7 +362,7 @@ class KeyboardActionWidget(QtWidgets.QWidget):
         self.threshold.valueChanged.connect(self._emit_updated)
         self.delay = QtWidgets.QDoubleSpinBox(self)
         self.delay.setMinimum(0.)
-        self.delay.setMaximum(10.)
+        self.delay.setMaximum(2.)
         self.delay.setSingleStep(0.01)
         self.delay.setValue(0.5)
         self.delay.valueChanged.connect(self._emit_updated)
@@ -401,7 +427,7 @@ class KeyboardTab(QtWidgets.QWidget):
         self.save_actions_button.clicked.connect(self.save_action)
         self.load_actions_button = QtWidgets.QPushButton("Load profile")
         self.load_actions_button.clicked.connect(self.load_profile)
-        #self.layout.addStretch()
+        # self.layout.addStretch()
 
         button_layout.addStretch()
         button_layout.addWidget(self.load_actions_button)
