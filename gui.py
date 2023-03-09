@@ -372,7 +372,7 @@ class KeyboardActionWidget(QtWidgets.QWidget):
         self.action_trigger_selector.addItems(["-", "up", "down", "hold high", "hold low"])
         self.action_trigger_selector.currentTextChanged.connect(self._emit_updated)
         self.action_type_selector = QtWidgets.QComboBox()
-        self.action_type_selector.addItems(["-", "press", "release", "hold", "press and release"])
+        self.action_type_selector.addItems(["-", "press", "release", "press and release"])
         self.action_type_selector.currentTextChanged.connect(self._emit_updated)
         self.key_input = QtWidgets.QKeySequenceEdit()
         self.key_input.setClearButtonEnabled(True)
@@ -520,15 +520,7 @@ class KeyboardTab(QtWidgets.QWidget):
                 for key_combo in reversed(parsed_hotkeys):
                     for key in reversed(key_combo):
                         self.keyboard_controller.release(key)
-        elif action_type == "hold":
-            # Todo: Is this needed? What should this mode do
-            def action_function():
-                for key_combo in parsed_hotkeys:
-                    for key in key_combo:
-                        self.keyboard_controller.press(key)
-                for key_combo in reversed(parsed_hotkeys):
-                    for key in reversed(key_combo):
-                        self.keyboard_controller.release(key)
+
         elif action_type == "press and release":
             def action_function():
                 for key_combo in parsed_hotkeys:
