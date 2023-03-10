@@ -53,9 +53,9 @@ class Mouse:
         dy = (pitch - self.pitch)
         dx = (yaw - self.yaw)
 
-        mouse_speed_co = 1.2  # Todo: Param for gui
+        mouse_speed_co = 1.1  # Todo: Param for gui
         mouse_speed_max = 25
-        acceleration = 4
+        acceleration = 3
 
         # TODO: Threshold / Deadzone
         mouse_speed_x = mouse_speed_y = 0
@@ -80,7 +80,8 @@ class Mouse:
         self.mouse_controller.move(mouse_speed_x, mouse_speed_y)
 
     def joystick_mouse(self, pitch, yaw):
-
+        pitch = 50*(pitch-0.5)
+        yaw = 50*(yaw-0.5)
         mouse_speed_co = 1.1
         mouse_speed_max = 25
         acceleration = 3
@@ -93,16 +94,16 @@ class Mouse:
         # See where the user's head tilting
         if yaw < threshold[0]:
             text = "Looking Left"
-            mouse_speed_x = -1 * min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max)
+            mouse_speed_x = -1 * min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max)+1
         if yaw > threshold[1]:
             text = "Looking Right"
-            mouse_speed_x = min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max)
+            mouse_speed_x = min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max)-1
         if pitch < threshold[2]:
             text = "Looking Down"
-            mouse_speed_y = min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max)
+            mouse_speed_y = min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max)+1
         if pitch > threshold[3]:
             text = "Looking Up"
-            mouse_speed_y = -1 * min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max)
+            mouse_speed_y = -1 * min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max)-1
 
         # print(text)
         self.mouse_controller.move(mouse_speed_x, mouse_speed_y)
