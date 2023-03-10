@@ -210,7 +210,7 @@ class GeneralTab(QtWidgets.QWidget):
 
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
-        self.debug_window.status_bar.showMessage(f"FPS: {self.demo.fps}")
+        self.debug_window.status_bar.showMessage(f"FPS: {self.demo.fps}, Mode: {self.demo.mouse.mode}")
 
 
 class MouseTab(QtWidgets.QWidget):

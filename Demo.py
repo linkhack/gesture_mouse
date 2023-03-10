@@ -31,7 +31,7 @@ class Demo(QThread):
         self.is_running = False
         self.mouse_enabled = False
         self.mouse_absolute = True
-        self.mouse = Mouse.Mouse()
+        self.mouse: Mouse.Mouse = Mouse.Mouse()
 
         self.frame_width, self.frame_height = (1280, 720)
         self.annotated_landmarks = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.int8)
@@ -55,7 +55,7 @@ class Demo(QThread):
         # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
         keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
-        # keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
+        keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
         self.transformed_signals = SignalsCalculator.SignalsResult()
@@ -199,7 +199,7 @@ class Demo(QThread):
         self.filter_landmarks = enabled
 
     def toggle_mouse_mode(self):
-        self.mouse_absolute = not self.mouse_absolute
+        self.mouse.toggle_mode()
 
     def setup_signals(self, json_path: str):
         """
